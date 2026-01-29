@@ -28,6 +28,7 @@ El objetivo principal es aplicar Scrum de forma práctica, mediante la planifica
 
 ## Estructura del proyecto
 
+```text
 Quiz-proyect/
 │
 ├── backend/
