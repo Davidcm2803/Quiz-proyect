@@ -1,13 +1,13 @@
-import Container from "../components/layout/Container";
+import Navbar from "../components/layout/Navbar";
+import Carousel from "../components/layout/Carousel";
 
 export default function Home() {
   return (
     <div className="bg-[#F8FBF3] min-h-screen">
-      <Container>
-        <div className="py-20">
-          <h1 className="text-3xl font-bold">test</h1>
-        </div>
-      </Container>
+      <Navbar />
+      <div className="px-14">
+        <Carousel />
+      </div>
     </div>
   );
 }

@@ -1,58 +1,88 @@
+import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Compass, GraduationCap, Play, Settings, Menu, X } from "lucide-react";
 import logo from "../../assets/logo.png";
 import Button from "../ui/Button";
-import { Compass, GraduationCap, Play, Settings } from "lucide-react";
+import NavItem from "../ui/NavItem";
+import JoinButton from "../ui/Joinbutton";
+import MobileMenu from "../ui/MobileMenu";
 
-//Join icon (Creado manual) USAR useLocation de REACT ROUTER
-
-const JoinColorIcon = () => (
-  <div className="grid grid-cols-2 gap-[2px] w-4 h-4 flex-shrink-0">
-    <div className="bg-red-500 rounded-[2px]" />
-    <div className="bg-blue-500 rounded-[2px]" />
-    <div className="bg-yellow-400 rounded-[2px]" />
-    <div className="bg-green-500 rounded-[2px]" />
-  </div>
-);
-
-//Data 
-
-const Nav_items = [
-  { label: "Discover", Icon: Compass, active: false }, //aca se deberia usar useLocation de React ROUTER
-  { label: "Learn", Icon: GraduationCap, active: false },
-  { label: "Present", Icon: Play, active: false },
-  { label: "Make", Icon: Settings, active: true }, // Esto debe cambiarse a que sea active dependiendo de el page donde este actualmente
+const NAV_ITEMS = [
+  {
+    label: "Discover",
+    Icon: Compass,
+    path: "/discover",
+    desc: "Browse all content",
+  },
+  {
+    label: "Learn",
+    Icon: GraduationCap,
+    path: "/learn",
+    desc: "Study at your pace",
+  },
+  { label: "Present", Icon: Play, path: "/present", desc: "Run live sessions" },
+  { label: "Make", Icon: Settings, path: "/", desc: "Create kahoots" },
 ];
 
-//Navbar
-
 export default function Navbar() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+
   return (
-    <nav className="bg-[#fde8e0] px-6 h-16 flex items-center justify-between">
-      {/*Logo*/}
-      <img
-        src={logo}
-        alt="QHit logo"
-        className="h-24 w-auto flex-shrink-0 object-contain pr-4"
-      />
-      {/*Links*/}
-      <div className="flex items-center gap-2 flex-1">
-        {Nav_items.map(({ label, Icon, active }) => (
-          <Button
-            key={label}
-            variant="nav"
-            className={active ? "ring-2 ring-red-400 ring-offset-0" : ""}
-          >
-            <Icon size={15} strokeWidth={2} />
-            {label}
+    <>
+      <nav className="bg-[#fde8e0] px-6 h-16 flex items-center justify-between relative z-50">
+        <img
+          src={logo}
+          alt="QHit logo"
+          className="h-20 w-auto object-contain cursor-pointer"
+          onClick={() => navigate("/")}
+        />
+
+        {/* Desktop links */}
+        <div className="hidden md:flex items-center gap-2 flex-1 ml-2">
+          {NAV_ITEMS.map(({ label, Icon, path }) => (
+            <NavItem
+              key={label}
+              label={label}
+              Icon={Icon}
+              active={location.pathname === path}
+              onClick={() => navigate(path)}
+            />
+          ))}
+          <JoinButton
+            active={location.pathname === "/join"}
+            onClick={() => navigate("/join")}
+          />
+        </div>
+
+        {/* Desktop sign up */}
+        <div className="hidden md:block">
+          <Button variant="signup" onClick={() => navigate("/Signup")}>
+            Sign up
           </Button>
-        ))}
-        {/*join*/}
-        <Button variant="nav">
-          <JoinColorIcon />
-          Join
-        </Button>
-      </div>
-      {/*Sign up*/}
-      <Button variant="signup">Sign up</Button>
-    </nav>
+        </div>
+
+        {/* Hamburger */}
+        <button
+          className="md:hidden flex items-center justify-center w-9 h-9 rounded-xl bg-white/60 hover:bg-white/90 transition-all shadow-sm border border-black/10"
+          onClick={() => setOpen((o) => !o)}
+        >
+          {open ? (
+            <X size={18} strokeWidth={2.5} />
+          ) : (
+            <Menu size={18} strokeWidth={2.5} />
+          )}
+        </button>
+      </nav>
+
+      <MobileMenu
+        open={open}
+        onClose={() => setOpen(false)}
+        navItems={NAV_ITEMS}
+        location={location}
+        navigate={navigate}
+      />
+    </>
   );
 }

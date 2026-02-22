@@ -79,53 +79,6 @@
   }
 }
 
-@layer utilities {
-  .container {
-    margin-inline: auto;
-    padding-inline: 2rem;
-  }
-
-  @media (min-width: 640px) {
-    .container { max-width: 640px; }
-  }
-  @media (min-width: 768px) {
-    .container { max-width: 768px; }
-  }
-  @media (min-width: 1024px) {
-    .container { max-width: 1024px; }
-  }
-  @media (min-width: 1280px) {
-    .container { max-width: 1280px; }
-  }
-  @media (min-width: 1400px) {
-    .container { max-width: 1400px; }
-  }
-
-  .text-glow {
-    position: relative;
-    text-shadow: 0 0 10px rgba(167, 139, 250, 0.5);
-  }
-
-  .card-hover {
-    @apply transition-transform duration-300 hover:scale-[1.02] hover:shadow-lg;
-  }
-
-  .cosmic-button {
-    @apply px-6 py-2 rounded-full bg-primary text-primary-foreground font-medium
-      transition-all duration-300 hover:scale-105 active:scale-95;
-  }
-
-  .star {
-    @apply absolute rounded-full bg-white;
-    box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.4);
-  }
-
-  .meteor {
-    @apply absolute bg-gradient-to-r from-white via-white to-transparent rounded-full;
-    box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.3);
-  }
-}
-
 #root {
   max-width: 100%;
   margin: 0;
