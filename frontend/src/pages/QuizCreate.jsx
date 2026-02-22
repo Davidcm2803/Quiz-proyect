@@ -47,7 +47,6 @@ export default function QuizCreate() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[#f5f5f5]">
-
       {/* Navbar */}
       <nav className="bg-[#fde8e0] px-4 md:px-6 h-16 flex items-center justify-between gap-2 md:gap-4 flex-shrink-0 z-50">
         <img
@@ -95,7 +94,6 @@ export default function QuizCreate() {
 
       {/* Contenido principal */}
       <div className="flex flex-1 overflow-hidden">
-
         {/* Sidebar izquierdo solo en desktop */}
         <div className="hidden md:flex">
           <QuestionSidebar
@@ -124,7 +122,7 @@ export default function QuizCreate() {
             />
 
             {/* Imagen */}
-            <div className="w-full md:w-[500px] mx-auto h-50 rounded-2xl overflow-hidden flex-shrink-0 mt-15 mb-10">
+            <div className="w-full md:w-[500px] mx-auto h-[280px] rounded-2xl overflow-hidden flex-shrink-0 mt-10 mb-10">
               <ImageUploader
                 image={active.image}
                 onImageChange={(val) => updateActive("image", val)}
@@ -166,7 +164,11 @@ export default function QuizCreate() {
                   ${activeIndex === i ? "border-blue-500 bg-white shadow-md" : "border-gray-100 bg-gray-50"}`}
               >
                 {q.image ? (
-                  <img src={q.image} alt="" className="w-full h-full object-cover" />
+                  <img
+                    src={q.image}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <span className="text-gray-400">{i + 1}</span>
                 )}
