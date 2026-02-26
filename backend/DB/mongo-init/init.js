@@ -11,6 +11,7 @@ db.createCollection("answers");
 db.createCollection("quizzes");
 db.createCollection("sessions");
 db.createCollection("rankings");
+db.createCollection("users");
 
 
 /* ============================
@@ -72,3 +73,11 @@ const ranking = db.rankings.insertOne({
   date: new Date()
 });
 
+const user = db.users.insertOne({
+  _id: ObjectId(),
+  username: "David",
+  email: "david@email.com",
+  password: "hashed_password", // siempre hasheado bcrypt o jwk
+  role: "admin", // "admin" | "host" | "player"
+  createdAt: new Date()
+});

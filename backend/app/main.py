@@ -6,7 +6,8 @@ from app.routes import (
     questions,
     answers,
     sessions,
-    rankings
+    rankings,
+    users,
 )
 
 app = FastAPI(title="Quiz API")
@@ -14,7 +15,8 @@ app = FastAPI(title="Quiz API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173",  # React dev server
+        "http://localhost:5173",
+        "http://localhost:5174",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -25,5 +27,6 @@ app.include_router(players.router)
 app.include_router(quizzes.router)
 app.include_router(questions.router)
 app.include_router(answers.router)
-#app.include_router(sessions.router)
-#app.include_router(rankings.router)
+app.include_router(sessions.router)
+app.include_router(rankings.router)
+app.include_router(users.router)
