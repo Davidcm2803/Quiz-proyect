@@ -8,10 +8,7 @@ import ImageUploader from "../components/quiz/Imageuploader";
 import AnswerGrid from "../components/quiz/Answergrid";
 import QuestionSidebar from "../components/quiz/Questionsidebar";
 import QuizSidebar from "../components/quiz/Quizsidebar";
-import { createQuestion } from "../database/database.ts";
-import { createAnswer } from "../database/database.ts";
-import { createQuiz } from "../database/database.ts";
-import { updateQuizQuestions } from "../database/database.ts";
+import { createQuestion, createAnswer, createQuiz, updateQuizQuestions } from "../database/database.js";
 
 const emptyQuestion = () => ({
   question: "",

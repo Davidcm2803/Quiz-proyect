@@ -7,8 +7,10 @@ itsdangerous==2.2.0
 Jinja2==3.1.6
 MarkupSafe==3.0.3
 Werkzeug==3.1.5
-fastapi
-uvicorn
-pymongo
-pydantic
-python-dotenv
+fastapi==0.115.6
+uvicorn==0.34.0
+pymongo==4.10.1
+pydantic==2.10.4
+python-dotenv==1.1.0
+passlib==1.7.4
+bcrypt==4.2.1
