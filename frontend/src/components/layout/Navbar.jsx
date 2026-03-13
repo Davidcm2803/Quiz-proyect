@@ -58,7 +58,7 @@ export default function Navbar() {
 
         {/* Desktop sign up */}
         <div className="hidden md:block">
-          <Button variant="signup" onClick={() => navigate("/Signup")}>
+          <Button variant="signup" onClick={() => navigate("/register")}>
             Sign up
           </Button>
         </div>

@@ -1,12 +1,57 @@
 import { useState } from "react";
+import { useContext } from "react";
+import { AuthContext } from "../../context/AuthContext";
 import IconButton from "../ui/IconButtons";
 import LoginButton from "../ui/LoginButton";
 import { GoogleIcon, MicrosoftIcon, AppleIcon, OtherIcon } from "../ui/Icons";
+import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+
 
 export default function LoginForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [focusedField, setFocusedField] = useState(null);
+  const navigate = useNavigate();
+  const [error, setError] = useState("");
+  const { setToken } = useContext(AuthContext);
+
+const handleLogin = async () => {
+  try {
+    
+    if (!username || !password) {
+      setError("Please fill all fields");
+      return;
+    }
+
+    const response = await fetch("http://localhost:8000/users/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email: username,  
+        password: password
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setError(data.detail || "Login failed");
+      return;
+    }
+
+    setToken(data.access_token);
+
+    // redirigir al home
+    navigate("/");
+
+  } catch (error) {
+    console.error(error);
+    setError("Server connection error");
+  }
+};
 
   return (
     <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-[#F8FBF3] font-serif">
@@ -58,6 +103,11 @@ export default function LoginForm() {
             focusedField === "password" ? "border-[#555]" : "border-[#ddd]"
           }`}
         />
+        {error && (
+          <p className="text-red-500 text-sm mb-2">
+            {error}
+          </p>
+        )}
 
         <p className="text-[13px] text-[#555] mb-[18px]">
           Forgot password?{" "}
@@ -66,13 +116,15 @@ export default function LoginForm() {
           </a>
         </p>
 
-        <LoginButton>Log in</LoginButton>
+        <LoginButton onClick={handleLogin}>
+          Log in
+        </LoginButton>
 
         <p className="text-sm text-center text-[#555] mb-5">
           Don't have an account?{" "}
-          <a href="#" className="text-[#1a1a1a] font-semibold underline">
+          <Link to="/register" className="text-[#1a1a1a] font-semibold underline">
             Sign up
-          </a>
+          </Link>
         </p>
 
         <p className="text-xs text-[#888] leading-relaxed">
