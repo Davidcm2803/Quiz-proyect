@@ -1,6 +1,6 @@
 import logo from "../../assets/logo.png";
 import { X } from "lucide-react";
-import NavItem from "./Navitem";
+import NavItem from "./NavItem";
 import JoinButton from "./Joinbutton";
 
 export default function MobileMenu({

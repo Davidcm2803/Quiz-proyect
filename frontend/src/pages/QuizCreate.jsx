@@ -26,9 +26,6 @@ export default function QuizCreate() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
 
-  const [saving,setSaving] = useState(false)
-  const [code,setCode] = useState(null)
-
   const active = questions[activeIndex];
 
   const updateActive = (field, value) => {
@@ -49,61 +46,6 @@ export default function QuizCreate() {
     setActiveIndex(Math.min(activeIndex, updated.length - 1));
   };
 
-  function isValid(){
-
-   if(!title || title.trim()==="") return false
-
-   for(const q of questions){
-
-    if(!q.question || q.question.trim()==="") return false
-
-    const empty = q.answers.some(a=>!a || a.trim()==="")
-    if(empty) return false
-
-    if(q.correct===null) return false
-   }
-
-   return true
-  }
-
-  async function saveQuiz(){
-
-   const confirmCreate = window.confirm(
-    "¿Está seguro que desea crear este quiz?"
-   )
-
-   if(!confirmCreate) return
-
-   setSaving(true)
-
-   try{
-
-    const res = await fetch("/quizzes",{
-     method:"POST",
-     headers:{
-      "Content-Type":"application/json"
-     },
-     body:JSON.stringify({
-       title,
-       questions
-     })
-    })
-
-    const data = await res.json()
-
-    if(!res.ok){
-     alert(data.detail)
-     return
-    }
-
-    setCode(data.code)
-
-   }catch(err){
-    alert("Error al crear quiz")
-   }
-
-   setSaving(false)
-  }
   const saveQuiz = async () => {
     try {
       const { id: quiz } = await createQuiz({
@@ -148,6 +90,7 @@ export default function QuizCreate() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[#f5f5f5]">
+
       {/* Navbar */}
       <nav className="bg-[#fde8e0] px-4 md:px-6 h-16 flex items-center justify-between gap-2 md:gap-4 flex-shrink-0 z-50">
         <img
@@ -174,25 +117,11 @@ export default function QuizCreate() {
           <Button variant="secondary" onClick={() => navigate("/")}>
             Exit
           </Button>
-
-          <button
-            disabled={!isValid() || saving}
-            onClick={saveQuiz}
-            className="bg-[#1a1a1a] hover:bg-[#333] text-white font-semibold text-sm px-4 md:px-6 py-2 rounded-lg transition-all active:scale-95 disabled:opacity-50"
-          >
-
           <button className="bg-[#1a1a1a] hover:bg-[#333] text-white font-semibold text-sm px-4 md:px-6 py-2 rounded-lg transition-all active:scale-95" onClick={saveQuiz}>
-
             Save
           </button>
         </div>
       </nav>
-
-      {code && (
-        <div className="bg-green-100 text-green-800 p-3 text-center font-semibold">
-          Quiz creado. Código: {code}
-        </div>
-      )}
 
       {/* Ajustes desplegables en móvil */}
       {showSettings && (
@@ -209,6 +138,8 @@ export default function QuizCreate() {
 
       {/* Contenido principal */}
       <div className="flex flex-1 overflow-hidden">
+
+        {/* Sidebar izquierdo solo en desktop */}
         <div className="hidden md:flex">
           <QuestionSidebar
             questions={questions}
@@ -219,6 +150,7 @@ export default function QuizCreate() {
           />
         </div>
 
+        {/* Editor con fondo */}
         <div
           className="flex-1 overflow-y-auto flex flex-col"
           style={{
@@ -228,18 +160,21 @@ export default function QuizCreate() {
           }}
         >
           <div className="flex flex-col h-full px-2 md:px-40 py-4 gap-2">
+            {/* Pregunta */}
             <QuestionPlaceholder
               value={active.question}
               onChange={(val) => updateActive("question", val)}
             />
 
-            <div className="w-full md:w-[500px] mx-auto h-[280px] rounded-2xl overflow-hidden flex-shrink-0 mt-10 mb-10">
+            {/* Imagen */}
+            <div className="w-full md:w-[500px] mx-auto h-50 rounded-2xl overflow-hidden flex-shrink-0 mt-15 mb-10">
               <ImageUploader
                 image={active.image}
                 onImageChange={(val) => updateActive("image", val)}
               />
             </div>
 
+            {/* AnswerGrid subido y separado de la parte inferior */}
             <div className="flex flex-col justify-start mt-4 pb-6">
               <AnswerGrid
                 answers={active.answers}
@@ -252,6 +187,7 @@ export default function QuizCreate() {
           </div>
         </div>
 
+        {/* Sidebar derecho solo en desktop */}
         <div className="hidden md:flex">
           <QuizSidebar
             timeLimit={active.timeLimit}
@@ -262,6 +198,7 @@ export default function QuizCreate() {
         </div>
       </div>
 
+      {/* Tira de preguntas en móvil */}
       <div className="md:hidden bg-white border-t border-gray-100 shadow-[0_-4px_12px_rgba(0,0,0,0.04)]">
         <div className="flex items-center gap-2 px-3 py-2 overflow-x-auto">
           {questions.map((q, i) => (
@@ -272,15 +209,12 @@ export default function QuizCreate() {
                   ${activeIndex === i ? "border-blue-500 bg-white shadow-md" : "border-gray-100 bg-gray-50"}`}
               >
                 {q.image ? (
-                  <img
-                    src={q.image}
-                    alt=""
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={q.image} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-gray-400">{i + 1}</span>
                 )}
               </button>
+              {/* Botón borrar */}
               {questions.length > 1 && (
                 <button
                   onClick={() => deleteQuestion(i)}
@@ -291,6 +225,7 @@ export default function QuizCreate() {
               )}
             </div>
           ))}
+          {/* Agregar pregunta */}
           <button
             onClick={addQuestion}
             className="flex-shrink-0 w-12 h-12 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-400 hover:border-gray-400 transition-all"
