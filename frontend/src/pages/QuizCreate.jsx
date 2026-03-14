@@ -8,6 +8,7 @@ import ImageUploader from "../components/quiz/Imageuploader";
 import AnswerGrid from "../components/quiz/Answergrid";
 import QuestionSidebar from "../components/quiz/Questionsidebar";
 import QuizSidebar from "../components/quiz/Quizsidebar";
+import { createQuestion, createAnswer, createQuiz, updateQuizQuestions } from "../database/database.js";
 
 const emptyQuestion = () => ({
   question: "",
@@ -103,6 +104,47 @@ export default function QuizCreate() {
 
    setSaving(false)
   }
+  const saveQuiz = async () => {
+    try {
+      const { id: quiz } = await createQuiz({
+        title,
+        description: "",
+        creator: "6993cc6bc3012d94d9284d0d",
+      });
+
+      const questionIds = [];
+
+      for (const q of questions) {
+        const { id: questionId } = await createQuestion({
+          quiz,                 
+          text: q.question,
+          points: 900,
+          time: q.timeLimit,
+        });
+
+        questionIds.push(questionId);
+
+        for (let i = 0; i < q.answers.length; i++) {
+          await createAnswer({
+            questionId,
+            text: q.answers[i],         
+            is_correct: Boolean(
+              Array.isArray(q.correct)
+                ? q.correct.includes(i)
+                : q.correct === i
+            ),
+          });
+        }
+      }
+
+      await updateQuizQuestions(quiz, questionIds);
+      console.log("Quiz saved successfully:", quiz);
+
+    } catch (error) {
+      console.error("Error saving quiz:", error);
+      alert("Failed to save quiz");
+    }
+  };
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[#f5f5f5]">
@@ -132,11 +174,15 @@ export default function QuizCreate() {
           <Button variant="secondary" onClick={() => navigate("/")}>
             Exit
           </Button>
+
           <button
             disabled={!isValid() || saving}
             onClick={saveQuiz}
             className="bg-[#1a1a1a] hover:bg-[#333] text-white font-semibold text-sm px-4 md:px-6 py-2 rounded-lg transition-all active:scale-95 disabled:opacity-50"
           >
+
+          <button className="bg-[#1a1a1a] hover:bg-[#333] text-white font-semibold text-sm px-4 md:px-6 py-2 rounded-lg transition-all active:scale-95" onClick={saveQuiz}>
+
             Save
           </button>
         </div>
