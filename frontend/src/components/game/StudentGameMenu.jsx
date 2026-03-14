@@ -4,6 +4,8 @@ import AnswerButtons from "../ui/AnswerButtons";
 import ScoreBoard from "./ScoreBoard";
 
 const WS_URL = "ws://localhost:8000";
+const COLORS = ["bg-[#e21b3c]", "bg-[#1368ce]", "bg-[#d89e00]", "bg-[#26890c]"];
+const ICONS = ["▲", "◆", "●", "■"];
 
 export default function StudentGameMenu() {
   const { roomId, playerId } = useParams();
@@ -31,8 +33,6 @@ export default function StudentGameMenu() {
         setPhase("starting");
 
       if (data.event === "newQuestion") {
-        console.log("pregunta recibida:", data.question);
-        console.log("answerType:", data.question?.answerType);
         const isMultiple = data.question?.answerType === "multiple";
         setQuestion(data.question);
         setSelected(isMultiple ? [] : null);
@@ -93,7 +93,7 @@ export default function StudentGameMenu() {
           points,
         }));
         setResult({ correct: allCorrect, partial, points });
-        setPhase("result");
+        setPhase("showAnswer");
       } else {
         setSelected((prev) => {
           const arr = Array.isArray(prev) ? prev : [];
@@ -112,7 +112,7 @@ export default function StudentGameMenu() {
         points: isCorrect ? 100 : 0,
       }));
       setResult({ correct: isCorrect, partial: false, points: isCorrect ? 100 : 0 });
-      setPhase("result");
+      setPhase("showAnswer");
     }
   };
 
@@ -135,7 +135,7 @@ export default function StudentGameMenu() {
 
   if (phase === "starting") return (
     <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center">
-      <h2 className="text-white text-5xl font-black animate-pulse">Estás listo??!</h2>
+      <h2 className="text-white text-5xl font-black animate-pulse">¡Prepárate!</h2>
     </div>
   );
 
@@ -150,7 +150,7 @@ export default function StudentGameMenu() {
           <div className="text-center max-w-lg">
             {isMultiple && (
               <span className="bg-white/10 text-white/60 text-xs font-semibold px-3 py-1 rounded-full mb-3 inline-block">
-                Selección múltiple — puedes elegir varias!
+                Selección múltiple — puedes elegir varias
               </span>
             )}
             <h2 className="text-white text-2xl md:text-3xl font-black mt-2">{question.text}</h2>
@@ -166,6 +166,36 @@ export default function StudentGameMenu() {
       </div>
     );
   }
+
+  if (phase === "showAnswer" && question) return (
+    <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center gap-6 px-4">
+      <p className="text-white/60 text-sm font-semibold uppercase tracking-widest">Respuesta correcta</p>
+      <div className="w-full max-w-lg flex flex-col gap-3">
+        {question.answers.map((ans, i) => {
+          const isCorrect = ans.is_correct;
+          const wasSelected = Array.isArray(selected) ? selected.includes(i) : selected === i;
+          return (
+            <div
+              key={i}
+              className={`${COLORS[i]} rounded-2xl px-5 py-4 flex items-center gap-3 transition-all
+                ${!isCorrect ? "opacity-30" : "ring-4 ring-white scale-[1.02]"}`}
+            >
+              <span className="text-white text-2xl">{ICONS[i]}</span>
+              <span className="text-white font-bold text-lg flex-1">{ans.text}</span>
+              {isCorrect && <span className="text-white text-2xl">✓</span>}
+              {wasSelected && !isCorrect && <span className="text-white text-2xl">✗</span>}
+            </div>
+          );
+        })}
+      </div>
+      <button
+        onClick={() => setPhase("result")}
+        className="bg-white text-[#1a1a1a] font-bold px-8 py-3 rounded-2xl transition-all active:scale-95 mt-2"
+      >
+        Ver resultado
+      </button>
+    </div>
+  );
 
   if (phase === "result") return (
     <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center gap-4 px-4">
@@ -192,6 +222,7 @@ export default function StudentGameMenu() {
       <p className="text-[#a0a0b0] text-sm">Esperando siguiente pregunta...</p>
     </div>
   );
+
 
   if (phase === "finished") return (
     <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center gap-6 px-4">

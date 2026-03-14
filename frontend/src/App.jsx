@@ -5,6 +5,7 @@ import Signup from "./pages/Signup";
 import QuizCreate from "./pages/QuizCreate";
 import StudentGame from "./pages/StudentGame";
 import HostGame from "./pages/HostGame";
+import QuizAIGenerator from "./pages/QuizAIGenerator";
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
         <Route path="/quiz/create" element={<QuizCreate />} />
         <Route path="/student/:roomId/:playerId" element={<StudentGame />} />
         <Route path="/host/:roomId" element={<HostGame />} />
+        <Route path="/quiz/ai" element={<QuizAIGenerator />} />
       </Routes>
     </BrowserRouter>
   );
