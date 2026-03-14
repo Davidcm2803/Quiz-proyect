@@ -39,13 +39,22 @@ export default function RegisterForm() {
         })
       });
 
-      const data = await response.json();
-      console.log(data);
+      let data = {};
 
-    if (!response.ok) {
-      setError(data.detail || "Error creating account :(");
-      return;
-    }
+      try {
+        data = await response.json();
+      } catch (e) {
+        data = { detail: "La respuesta no vino en formato JSON" };
+      }
+
+      console.log("STATUS:", response.status);
+      console.log("DATA:", data);
+
+      if (!response.ok) {
+        setError(data.detail || `Error creating account (${response.status})`);
+        return;
+      }
+      
       alert("Welcome to QHit! Now your're part of the fun :D");
         navigate("/signup");
 

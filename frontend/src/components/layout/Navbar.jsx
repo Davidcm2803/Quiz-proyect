@@ -6,6 +6,7 @@ import Button from "../ui/Button";
 import NavItem from "../ui/NavItem";
 import JoinButton from "../ui/Joinbutton";
 import MobileMenu from "../ui/MobileMenu";
+import { useAuth } from "../../context/AuthContext";
 
 const NAV_ITEMS = [
   {
@@ -28,6 +29,8 @@ export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+
+  const { user, logout } = useAuth(); // ← aquí debe ir
 
   return (
     <>
@@ -56,11 +59,22 @@ export default function Navbar() {
           />
         </div>
 
-        {/* Desktop sign up */}
-        <div className="hidden md:block">
-          <Button variant="signup" onClick={() => navigate("/register")}>
-            Sign up
-          </Button>
+        {/* Desktop auth */}
+        <div className="hidden md:flex items-center gap-3">
+
+          {user ? (
+            <>
+              <span className="text-sm">Hi {user.username}</span>
+              <Button onClick={logout}>
+                Logout
+              </Button>
+            </>
+          ) : (
+            <Button variant="signup" onClick={() => navigate("/register")}>
+              Sign up
+            </Button>
+          )}
+
         </div>
 
         {/* Hamburger */}
