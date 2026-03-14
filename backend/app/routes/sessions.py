@@ -1,7 +1,8 @@
-# app/routes/sessions.py
-
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.utils.ws_manager import WSManager
+from app.db import rankings
+from bson import ObjectId
+from datetime import datetime
 import json
 
 router = APIRouter()
@@ -16,37 +17,31 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, player_id: str)
         while True:
             data = await websocket.receive_text()
             data = json.loads(data)
-
             event = data.get("event")
 
-            # 🔹 joinRoom
             if event == "joinRoom":
                 await manager.broadcast(room_id, {
                     "event": "playerJoined",
                     "playerId": player_id
                 })
 
-            # 🔹 startQuiz
             elif event == "startQuiz":
                 await manager.broadcast(room_id, {
                     "event": "quizStarted"
                 })
 
-            # 🔹 sendQuestion
             elif event == "newQuestion":
                 question = data.get("question")
-
                 await manager.broadcast(room_id, {
                     "event": "newQuestion",
                     "question": question
                 })
 
-            # 🔹 submitAnswer
             elif event == "submitAnswer":
                 question_id = data.get("questionId")
                 answer = data.get("answer")
+                points = data.get("points", 0)
 
-                # Prevent duplicate answers
                 if manager.has_answered(room_id, question_id, player_id):
                     await websocket.send_json({
                         "event": "error",
@@ -54,23 +49,45 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, player_id: str)
                     })
                     continue
 
-                # Example scoring logic
-                if answer == "correct":
-                    manager.update_score(room_id, player_id, 100)
+                # suma los puntos que calculó el frontend
+                if points > 0:
+                    manager.update_score(room_id, player_id, points)
 
                 await manager.broadcast(room_id, {
                     "event": "answerSubmitted",
                     "playerId": player_id
                 })
 
-            # 🔹 updateScore
             elif event == "updateScore":
                 room = manager.rooms.get(room_id)
-
+                scores = room.scores if room else {}
                 await manager.broadcast(room_id, {
                     "event": "scoreUpdate",
-                    "scores": room.scores if room else {}
+                    "scores": scores
                 })
+
+            elif event == "endQuiz":
+                room = manager.rooms.get(room_id)
+                if room:
+                    sorted_scores = sorted(
+                        [(pid, score) for pid, score in room.scores.items() if pid != "host"],
+                        key=lambda x: x[1],
+                        reverse=True
+                    )
+                    for position, (pid, score) in enumerate(sorted_scores, start=1):
+                        rankings.insert_one({
+                            "_id": ObjectId(),
+                            "session": room_id,
+                            "player": pid,
+                            "position": position,
+                            "final_score": score,
+                            "date": datetime.utcnow(),
+                        })
+
+                    await manager.broadcast(room_id, {
+                        "event": "quizEnded",
+                        "scores": dict(sorted_scores)
+                    })
 
     except WebSocketDisconnect:
         manager.disconnect(room_id, player_id)

@@ -4,7 +4,7 @@ const API_URL = "http://localhost:8000";
  * @returns {Promise<Question[]>}
  */
 export async function getQuestions() {
-  const res = await fetch(API_URL);
+  const res = await fetch(`${API_URL}/questions/`);
   if (!res.ok) throw new Error("Failed to fetch questions");
   return res.json();
 }
@@ -14,7 +14,7 @@ export async function getQuestions() {
  * @returns {Promise<Question>}
  */
 export async function getQuestion(id) {
-  const res = await fetch(`${API_URL}/${id}`);
+  const res = await fetch(`${API_URL}/questions/${id}`);
   if (!res.ok) throw new Error("Question not found");
   return res.json();
 }
@@ -24,7 +24,7 @@ export async function getQuestion(id) {
  * @returns {Promise<Answer[]>}
  */
 export async function getAnswers(questionId) {
-  const res = await fetch(`${API_URL}/${questionId}/answers`);
+  const res = await fetch(`${API_URL}/answers/?question=${questionId}`);
   if (!res.ok) throw new Error("Failed to fetch answers");
   return res.json();
 }
@@ -35,7 +35,7 @@ export async function getAnswers(questionId) {
  * @returns {Promise<Answer>}
  */
 export async function getAnswer(questionId, answerId) {
-  const res = await fetch(`${API_URL}/${questionId}/answers/${answerId}`);
+  const res = await fetch(`${API_URL}/answers/${answerId}`);
   if (!res.ok) throw new Error("Answer not found");
   return res.json();
 }
@@ -48,14 +48,8 @@ export async function createQuestion(payload) {
   const res = await fetch(`${API_URL}/questions`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      quiz: payload.quiz,
-      text: payload.text,
-      points: payload.points,
-      time: payload.time,
-    }),
+    body: JSON.stringify(payload),
   });
-
   if (!res.ok) throw new Error("Failed to create question");
   return res.json();
 }
@@ -65,7 +59,7 @@ export async function createQuestion(payload) {
  * @returns {Promise<Answer>}
  */
 export async function createAnswer(payload) {
-  const res = await fetch(`${API_URL}/answers`, {
+  const res = await fetch(`${API_URL}/answers/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -84,14 +78,13 @@ export async function createAnswer(payload) {
  * @returns {Promise<{ id: string }>}
  */
 export async function createQuiz(payload) {
-  const res = await fetch(`${API_URL}/quizzes`, {
+  const res = await fetch(`${API_URL}/quizzes/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      ...payload,
-      started: false,
-      createdAt: new Date().toISOString(),
-      questions: [],
+      title: payload.title,
+      description: payload.description,
+      creator: payload.creator,
     }),
   });
 

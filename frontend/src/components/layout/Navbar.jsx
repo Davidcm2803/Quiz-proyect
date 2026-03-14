@@ -39,7 +39,7 @@ export default function Navbar() {
           onClick={() => navigate("/")}
         />
 
-        {/* Desktop links */}
+        {/* links */}
         <div className="hidden md:flex items-center gap-2 flex-1 ml-2">
           {NAV_ITEMS.map(({ label, Icon, path }) => (
             <NavItem
@@ -56,7 +56,7 @@ export default function Navbar() {
           />
         </div>
 
-        {/* Desktop sign up */}
+        {/* sign up */}
         <div className="hidden md:block">
           <Button variant="signup" onClick={() => navigate("/Signup")}>
             Sign up

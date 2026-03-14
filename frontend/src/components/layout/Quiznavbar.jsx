@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import Button from "../ui/Button";
 
-export default function QuizNavbar({ title, onTitleChange, onExit, onSave }) {
+export default function QuizNavbar({ title, onTitleChange, onExit, onSave, saving }) {
   const navigate = useNavigate();
 
   return (
@@ -13,7 +13,6 @@ export default function QuizNavbar({ title, onTitleChange, onExit, onSave }) {
         className="h-20 w-auto object-contain cursor-pointer flex-shrink-0"
         onClick={() => navigate("/")}
       />
-
       <input
         type="text"
         value={title}
@@ -21,13 +20,12 @@ export default function QuizNavbar({ title, onTitleChange, onExit, onSave }) {
         placeholder="Quiz title"
         className="flex-1 max-w-xs bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-gray-300 transition-all"
       />
-
       <div className="flex items-center gap-2 flex-shrink-0">
         <Button variant="exit" onClick={onExit ?? (() => navigate("/"))}>
           Exit
         </Button>
-        <Button variant="save" onClick={onSave}>
-          Save
+        <Button variant="save" onClick={onSave} disabled={saving}>
+          {saving ? "Guardando..." : "Save"}
         </Button>
       </div>
     </nav>

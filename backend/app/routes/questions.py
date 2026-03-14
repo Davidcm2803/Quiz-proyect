@@ -9,13 +9,14 @@ router = APIRouter(prefix="/questions", tags=["Questions"])
 
 @router.post("/")
 def create_question(question: QuestionCreate):
+    print("payload recibido:", question.dict())
     result = questions.insert_one({
         "quiz": ObjectId(question.quiz),
         "text": question.text,
         "points": question.points,
         "time": question.time,
+        "answerType": question.answerType,
     })
-
     return {"id": str(result.inserted_id)}
 
 
