@@ -101,5 +101,11 @@ export function useQuizCreate() {
     }
   };
 
-  return { title, setTitle, questions, active, activeIndex, setActiveIndex, saving, updateActive, addQuestion, deleteQuestion, saveQuiz };
+  return {
+    title, setTitle,
+    questions, setQuestions,
+    active, activeIndex, setActiveIndex,
+    saving,
+    updateActive, addQuestion, deleteQuestion, saveQuiz,
+  };
 }

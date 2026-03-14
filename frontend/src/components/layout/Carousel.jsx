@@ -29,7 +29,7 @@ const TOOLS = [
     icon: <Sparkles size={22} strokeWidth={2} color="white" />,
     title: "Save time! Create kahoots with AI",
     buttonLabel: "Start creating",
-    path: null,
+    path: "/quiz/ai",
   },
   {
     id: 3,
