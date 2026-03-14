@@ -4,6 +4,7 @@ import LoginButton from "../ui/LoginButton";
 import { GoogleIcon, MicrosoftIcon, AppleIcon, OtherIcon } from "../ui/Icons";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 
 export default function LoginForm() {
@@ -12,6 +13,8 @@ export default function LoginForm() {
   const [focusedField, setFocusedField] = useState(null);
   const navigate = useNavigate();
   const [error, setError] = useState("");
+  const { login } = useAuth();
+
 
 const handleLogin = async () => {
   try {
@@ -39,7 +42,7 @@ const handleLogin = async () => {
       return;
     }
 
-    localStorage.setItem("token", data.access_token);
+    login(data.access_token, data.user);
 
     // redirigir al home
     navigate("/");
