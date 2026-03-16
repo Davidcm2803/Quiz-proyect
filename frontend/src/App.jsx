@@ -1,3 +1,5 @@
+// src/App.jsx
+
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Join from "./pages/Join";
@@ -7,6 +9,7 @@ import QuizCreate from "./pages/QuizCreate";
 import StudentGame from "./pages/StudentGame";
 import HostGame from "./pages/HostGame";
 import QuizAIGenerator from "./pages/QuizAIGenerator";
+import ProtectedRoute from "./components/layout/ProtectedRoute";
 
 export default function App() {
   return (
@@ -14,12 +17,22 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/join" element={<Join />} />
-        <Route path="/signup" element={<Signup />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/quiz/create" element={<QuizCreate />} />
+        <Route path="/signup" element={<Signup />} />
         <Route path="/student/:roomId/:playerId" element={<StudentGame />} />
         <Route path="/host/:roomId" element={<HostGame />} />
-        <Route path="/quiz/ai" element={<QuizAIGenerator />} />
+
+        {/*Lo que tiene ProtectedRoute necesita estar logueado */}
+        <Route path="/quiz/create" element={
+          <ProtectedRoute>
+            <QuizCreate />
+          </ProtectedRoute>
+        } />
+        <Route path="/quiz/ai" element={
+          <ProtectedRoute>
+            <QuizAIGenerator />
+          </ProtectedRoute>
+        } />
       </Routes>
     </BrowserRouter>
   );

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { createQuestion, createAnswer, createQuiz, updateQuizQuestions } from "../database/database.js";
 
 const emptyQuestion = () => ({
@@ -13,6 +14,7 @@ const emptyQuestion = () => ({
 
 export function useQuizCreate() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [title, setTitle] = useState("Quiz title");
   const [questions, setQuestions] = useState([emptyQuestion()]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -64,7 +66,7 @@ export function useQuizCreate() {
       const { id: quizId, pin } = await createQuiz({
         title: title.trim(),
         description: "",
-        creator: "6993cc6bc3012d94d9284d0d",
+        creator: user.id, 
       });
 
       const questionIds = [];

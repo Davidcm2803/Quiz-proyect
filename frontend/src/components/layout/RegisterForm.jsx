@@ -56,7 +56,7 @@ export default function RegisterForm() {
       }
       
       alert("Welcome to QHit! Now your're part of the fun :D");
-        navigate("/.signup");
+        navigate("/signup");
 
     } catch (error) {
       console.error(error);
