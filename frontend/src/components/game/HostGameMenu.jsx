@@ -4,8 +4,8 @@ import ScoreBoard from "./ScoreBoard";
 import Navbar from "../layout/Navbar";
 import Button from "../ui/Button";
 
-const WS_URL = "ws://localhost:8000";
-const API_URL = "http://localhost:8000";
+const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const COLORS = ["bg-[#e21b3c]", "bg-[#1368ce]", "bg-[#d89e00]", "bg-[#26890c]"];
 const ICONS = ["▲", "◆", "●", "■"];
