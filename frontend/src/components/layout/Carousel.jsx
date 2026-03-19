@@ -71,7 +71,7 @@ function ToolCard({ bgColor, icon, title, buttonLabel, path }) {
   return (
     <div
       style={{ backgroundColor: bgColor }}
-      className="rounded-xl p-4 h-40 flex flex-col justify-between shadow-md w-full"
+      className="rounded-xl p-4 h-40 flex flex-col justify-between shadow-md w-full cursor-pointer"
     >
       <div className="flex items-center gap-3">
         <div
@@ -80,13 +80,14 @@ function ToolCard({ bgColor, icon, title, buttonLabel, path }) {
         >
           {icon}
         </div>
-        <p className="text-white font-semibold text-sm leading-snug">{title}</p>
+        <p className="text-white font-semibold text-m leading-snug">{title}</p>
       </div>
+
       <div className="flex justify-end">
         <Button
           variant="secondary"
-          size="sm"
-          className="rounded-full"
+          size="m"
+          className="rounded-full px-6 py-2 text-base shadow-md hover:shadow-lg"
           onClick={() => path && navigate(path)}
         >
           {buttonLabel}
@@ -143,11 +144,11 @@ export default function Carousel() {
 
   return (
     <section className="py-6 w-full relative">
-      <h2 className="text-2xl font-black text-gray-900 mb-3 text-left ml-14">
+      <h2 className="text-2xl font-black text-gray-900 mb-4 text-left ml-14">
         Quick tools to get started
       </h2>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 mb-0">
         <CarouselArrow onClick={prev}>
           <ChevronLeft size={18} strokeWidth={2.5} />
         </CarouselArrow>

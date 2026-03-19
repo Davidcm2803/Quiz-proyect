@@ -117,9 +117,9 @@ export default function StudentGameMenu() {
   };
 
   if (phase === "waiting") return (
-    <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center gap-6 px-4">
-      <h2 className="text-white text-3xl font-black">¡Listo, {playerId}!</h2>
-      <p className="text-[#a0a0b0]">Esperando que el host inicie...</p>
+    <div className="min-h-screen bg-[#F8FBF3] flex flex-col items-center justify-center gap-6 px-4">
+      <h2 className="text-[#292726] text-3xl font-black">¡Listo, {playerId}!</h2>
+      <p className="text-[#292726]">Esperando que el host inicie...</p>
       <div className="flex flex-wrap gap-2 justify-center mt-2">
         {players.map((p, i) => (
           <span key={i} className="bg-white/10 text-white text-sm px-4 py-2 rounded-full">{p}</span>
