@@ -1,4 +1,4 @@
-# Quiz Project – Aplicación Educativa (React + Flask)
+# Quiz Project – Aplicación Educativa (React + FastApi)
 
 Este proyecto corresponde al desarrollo de una solución digital educativa utilizando la metodología ágil **Scrum**.  
 La aplicación implementa un **quiz educativo** bajo una arquitectura **cliente-servidor**, con dos tipos de usuarios:
