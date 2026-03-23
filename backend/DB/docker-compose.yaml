@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   mongodb:
     image: mongo:latest
@@ -8,11 +6,6 @@ services:
 
     ports:
       - "27017:27017"
-
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: admin1234
-      MONGO_INITDB_DATABASE: quizapp
 
     volumes:
       - mongo_data:/data/db

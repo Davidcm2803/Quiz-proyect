@@ -1,6 +1,6 @@
 from pymongo import MongoClient
 
-client = MongoClient("mongodb://admin:admin1234@localhost:27017/?authSource=admin")
+client = MongoClient("mongodb://127.0.0.1:27017")
 
 db = client["quizdb"]
 
@@ -11,4 +11,3 @@ answers = db.answers
 sessions = db.sessions
 rankings = db.rankings
 users = db.users
-

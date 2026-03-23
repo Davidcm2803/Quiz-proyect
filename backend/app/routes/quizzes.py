@@ -1,11 +1,39 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Header
 from datetime import datetime
 from bson import ObjectId
-from app.db import quizzes, questions, answers
+from jose import jwt, JWTError
+
+from app.db import quizzes, questions, answers, users
 from app.models.quiz import QuizCreate, generate_pin
 from app.utils.serializers import serialize_mongo
+from app.utils.security import SECRET_KEY, ALGORITHM
 
 router = APIRouter(prefix="/quizzes", tags=["Quizzes"])
+
+
+def get_current_user_from_token(authorization: str = Header(default=None)):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Token no proporcionado")
+
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Formato de token inválido")
+
+    token = authorization.split(" ")[1]
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Token inválido")
+
+        db_user = users.find_one({"_id": ObjectId(user_id)})
+        if not db_user:
+            raise HTTPException(status_code=401, detail="Usuario no encontrado")
+
+        return db_user
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token inválido")
 
 
 @router.post("/")
@@ -34,8 +62,15 @@ def update_quiz_questions(quiz_id: str, payload: dict):
 
 
 @router.get("/")
-def get_all_quizzes():
-    return [serialize_mongo(q) for q in quizzes.find()]
+def get_user_quizzes(authorization: str = Header(default=None)):
+    db_user = get_current_user_from_token(authorization)
+
+    user_quizzes = []
+    for quiz in quizzes.find({"creator": db_user["_id"]}):
+        serialized = serialize_mongo(quiz)
+        user_quizzes.append(serialized)
+
+    return user_quizzes
 
 
 @router.get("/full/by-pin/{pin}")
@@ -77,6 +112,22 @@ def get_quiz(quiz_id: str):
 
 
 @router.delete("/{quiz_id}")
-def delete_quiz(quiz_id: str):
-    quizzes.delete_one({"_id": ObjectId(quiz_id)})
+def delete_quiz(quiz_id: str, authorization: str = Header(default=None)):
+    db_user = get_current_user_from_token(authorization)
+
+    quiz = quizzes.find_one({"_id": ObjectId(quiz_id)})
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz no encontrado")
+
+    if quiz.get("creator") != db_user["_id"]:
+        raise HTTPException(status_code=403, detail="No puedes eliminar un quiz que no te pertenece")
+
+    question_ids = quiz.get("questions", [])
+
+    for question_id in question_ids:
+        answers.delete_many({"question": question_id})
+
+    questions.delete_many({"quiz": quiz["_id"]})
+    quizzes.delete_one({"_id": quiz["_id"]})
+
     return {"ok": True}
