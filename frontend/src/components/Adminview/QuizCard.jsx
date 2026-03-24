@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, Play } from "lucide-react";
 
 export default function QuizCard({ quiz, onDelete }) {
   const navigate = useNavigate();
@@ -27,6 +27,16 @@ export default function QuizCard({ quiz, onDelete }) {
     e.stopPropagation();
     setMenuOpen(false);
     navigate(`/quiz/edit/${quiz.id}`);
+  };
+
+  const handlePlay = (e) => {
+    e.stopPropagation();
+    setMenuOpen(false);
+    if (!quiz.pin) {
+      alert("Este quiz no tiene un pin asignado.");
+      return;
+    }
+    navigate(`/host/${quiz.pin}`);
   };
 
   return (
@@ -65,8 +75,15 @@ export default function QuizCard({ quiz, onDelete }) {
           {menuOpen && (
             <div className="absolute right-0 bottom-8 w-36 bg-white rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden z-50">
               <button
+                onClick={handlePlay}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-green-600 hover:bg-green-50 transition-colors"
+              >
+                <Play size={13} />
+                Jugar
+              </button>
+              <button
                 onClick={handleEdit}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors border-t border-gray-100"
               >
                 <Pencil size={13} className="text-gray-400" />
                 Editar
