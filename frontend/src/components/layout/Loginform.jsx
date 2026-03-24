@@ -2,9 +2,9 @@ import { useState } from "react";
 import IconButton from "../ui/IconButtons";
 import LoginButton from "../ui/LoginButton";
 import { GoogleIcon, MicrosoftIcon, AppleIcon, OtherIcon } from "../ui/Icons";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { signInWithGoogle } from "../../firebase/firebase";
 
 export default function LoginForm() {
   const [username, setUsername] = useState("");
@@ -23,13 +23,8 @@ export default function LoginForm() {
 
       const response = await fetch("http://localhost:8000/users/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: username,
-          password: password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: username, password: password }),
       });
 
       const data = await response.json();
@@ -43,12 +38,47 @@ export default function LoginForm() {
       }
 
       login(data.access_token, data.user);
-
-      // redirigir al home
       navigate("/");
     } catch (error) {
       console.error(error);
       setError("Server connection error");
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      const result = await signInWithGoogle();
+      if (!result) return;
+
+      setTimeout(async () => {
+        try {
+          const response = await fetch("http://localhost:8000/users/google-login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id_token: result.idToken }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            setError(data.detail || "Google login failed");
+            return;
+          }
+
+          login(data.access_token, data.user);
+          navigate("/");
+        } catch (err) {
+          console.error(err);
+          setError("Google login error");
+        }
+      }, 500);
+    } catch (error) {
+      if (error.message === "POPUP_BLOCKED") {
+        setError("Allow popups for this site and try again.");
+        return;
+      }
+      console.error(error);
+      setError("Google login error");
     }
   };
 
@@ -61,17 +91,12 @@ export default function LoginForm() {
 
         <div className="flex gap-2.5 mb-4">
           {[
-            { icon: <GoogleIcon />, label: "Google" },
-            { icon: <MicrosoftIcon />, label: "Microsoft" },
-            { icon: <AppleIcon />, label: "Apple" },
-            { icon: <OtherIcon />, label: "Other" },
-          ].map(({ icon, label }) => (
-            <IconButton
-              key={label}
-              icon={icon}
-              label={label}
-              onClick={() => {}}
-            />
+            { icon: <GoogleIcon />, label: "Google", onClick: handleGoogleLogin },
+            { icon: <MicrosoftIcon />, label: "Microsoft", onClick: () => {} },
+            { icon: <AppleIcon />, label: "Apple", onClick: () => {} },
+            { icon: <OtherIcon />, label: "Other", onClick: () => {} },
+          ].map(({ icon, label, onClick }) => (
+            <IconButton key={label} icon={icon} label={label} onClick={onClick} />
           ))}
         </div>
 
@@ -120,24 +145,16 @@ export default function LoginForm() {
 
         <p className="text-sm text-center text-[#555] mb-5">
           Don't have an account?{" "}
-          <Link
-            to="/register"
-            className="text-[#1a1a1a] font-semibold underline"
-          >
+          <Link to="/register" className="text-[#1a1a1a] font-semibold underline">
             Sign up
           </Link>
         </p>
 
         <p className="text-xs text-[#888] leading-relaxed">
           By signing up, you accept our{" "}
-          <a href="#" className="text-[#666] underline">
-            Terms and Conditions
-          </a>
+          <a href="#" className="text-[#666] underline">Terms and Conditions</a>
           . Please read our{" "}
-          <a href="#" className="text-[#666] underline">
-            Privacy Notice
-          </a>
-          .
+          <a href="#" className="text-[#666] underline">Privacy Notice</a>.
         </p>
       </div>
     </div>

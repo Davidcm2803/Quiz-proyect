@@ -15,6 +15,7 @@ class QuizCreate(BaseModel):
     title: str
     description: Optional[str] = ""
     creator: str
+    image: Optional[str] = None
 
 
 class Quiz(QuizCreate):
@@ -22,3 +23,4 @@ class Quiz(QuizCreate):
     started: bool = False
     pin: Optional[int] = None
     createdAt: datetime
+    

@@ -7,3 +7,4 @@ class QuestionCreate(BaseModel):
     points: int
     time: int
     answerType: Optional[str] = "single"
+    image: Optional[str] = None

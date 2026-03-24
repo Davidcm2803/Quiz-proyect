@@ -1,9 +1,7 @@
-// src/pages/QuizAIGenerator.jsx
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles } from "lucide-react";
-import QuizNavbar from "../components/layout/Quiznavbar";
+import QuizNavbar from "../components/quiz/Quiznavbar";
 import QuizEditor from "../components/quiz/QuizEditor";
 import QuizMobileBar from "../components/quiz/QuizMobileBar";
 import QuestionSidebar from "../components/quiz/Questionsidebar";
@@ -28,8 +26,6 @@ export default function QuizAIGenerator() {
     await generateQuiz(prompt);
     setShowEditor(true);
   };
-
-  // vista del editor con el quiz generado
   if (showEditor) {
     return (
       <div className="h-screen flex flex-col overflow-hidden bg-[#f5f5f5]">
@@ -70,7 +66,6 @@ export default function QuizAIGenerator() {
     );
   }
 
-  // vista del prompt
   return (
     <div className="bg-[#F8FBF3] min-h-screen flex flex-col">
       <nav className="bg-[#fde8e0] px-6 h-16 flex items-center justify-between z-50 gap-4">

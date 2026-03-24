@@ -92,6 +92,7 @@ export default function HostGameMenu() {
       question: {
         id: q._id,
         text: q.text,
+        image: q.image ?? null,
         answers: q.answers,
         time: q.time,
         answerType: q.answerType,
@@ -143,8 +144,6 @@ export default function HostGameMenu() {
                 <span className="text-[#1a1a1a]/40 text-sm">{quizQuestions.length} {quizQuestions.length === 1 ? "pregunta" : "preguntas"}</span>
               </div>
             </div>
-
-            {/* jugadores */}
             <div className="px-8 py-7">
               <div className="flex items-center justify-between mb-5">
                 <p className="text-gray-700 font-bold text-sm">Jugadores en sala</p>
@@ -169,9 +168,7 @@ export default function HostGameMenu() {
                 )}
               </div>
             </div>
-
             <div className="h-px bg-gray-100 mx-8" />
-
             <div className="px-8 py-6">
               <button
                 onClick={startQuiz}
@@ -182,7 +179,6 @@ export default function HostGameMenu() {
               </button>
             </div>
           </div>
-
           <p className="text-center text-gray-400 text-xs">
             Los jugadores pueden unirse en <span className="font-semibold text-gray-500">/join</span> con el código de sala
           </p>
@@ -207,6 +203,13 @@ export default function HostGameMenu() {
             <span className="bg-white/10 text-white/50 text-xs font-semibold px-3 py-1 rounded-full mb-4 inline-block">
               Selección múltiple
             </span>
+          )}
+          {current.image && (
+            <img
+              src={current.image}
+              alt=""
+              className="w-full max-h-48 object-contain rounded-2xl mb-4"
+            />
           )}
           <h2 className="text-white text-3xl font-black mt-2">{current.text}</h2>
         </div>
