@@ -1,5 +1,5 @@
 import { useLibrary } from "../hooks/useLibrary";
-import QuizCard from "../components/ui/QuizCard";
+import QuizCard from "../components/Adminview/QuizCard";
 
 export default function Library() {
   const { quizzes, loading, error, deleteQuiz } = useLibrary();
