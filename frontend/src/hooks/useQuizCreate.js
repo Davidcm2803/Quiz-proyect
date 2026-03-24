@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { createQuestion, createAnswer, createQuiz, updateQuizQuestions } from "../database/database.js";
+import { createQuestion, createAnswer, createQuiz, updateQuizQuestions, getQuizFull } from "../database/database.js";
+
+const API_URL = "http://localhost:8000";
 
 const emptyQuestion = () => ({
   question: "",
@@ -12,15 +14,46 @@ const emptyQuestion = () => ({
   answerType: "single",
 });
 
-export function useQuizCreate() {
+const mapQuestion = (q) => ({
+  id: q.id,
+  question: q.text,
+  image: q.image ?? null,
+  answers: q.answers.map((a) => a.text),
+  correct: (() => {
+    const correct = q.answers
+      .map((a, i) => (a.is_correct ? i : null))
+      .filter((i) => i !== null);
+    return correct.length === 1 ? correct[0] : correct;
+  })(),
+  timeLimit: q.time ?? 20,
+  answerType: q.answerType ?? "single",
+});
+
+export function useQuizCreate(quizId = null) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [title, setTitle] = useState("Quiz title");
   const [questions, setQuestions] = useState([emptyQuestion()]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(!!quizId);
+  const [quizPin, setQuizPin] = useState(null);
 
-  const active = questions[activeIndex];
+  const isEditing = !!quizId;
+
+  useEffect(() => {
+    if (!quizId) return;
+    getQuizFull(quizId)
+      .then((data) => {
+        setTitle(data.title);
+        setQuestions(data.questions.map(mapQuestion));
+        setQuizPin(data.pin);
+      })
+      .catch(() => alert("Error cargando el quiz"))
+      .finally(() => setLoading(false));
+  }, [quizId]);
+
+  const active = questions[activeIndex] ?? null;
 
   const updateActive = (field, value) =>
     setQuestions((prev) =>
@@ -59,21 +92,42 @@ export function useQuizCreate() {
 
   const saveQuiz = async () => {
     if (!validate()) return;
-    if (!window.confirm("¿Deseas guardar este quiz?")) return;
+    if (!window.confirm(isEditing ? "¿Guardar cambios?" : "¿Deseas guardar este quiz?")) return;
 
     setSaving(true);
     try {
-      const { id: quizId, pin } = await createQuiz({
-        title: title.trim(),
-        description: "",
-        creator: user.id, 
-      });
+      let quizIdToUse = quizId;
+
+      if (isEditing) {
+        await fetch(`${API_URL}/quizzes/${quizId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: title.trim(),
+            image: questions[0]?.image ?? null,
+          }),
+        });
+
+        await fetch(`${API_URL}/questions/by-quiz/${quizId}`, {
+          method: "DELETE",
+        });
+      } else {
+        const { id, pin: newPin } = await createQuiz({
+          title: title.trim(),
+          description: "",
+          creator: user.id,
+          image: questions[0]?.image ?? null,
+        });
+        quizIdToUse = id;
+        window._savedPin = newPin;
+      }
 
       const questionIds = [];
       for (const q of questions) {
         const { id: questionId } = await createQuestion({
-          quiz: quizId,
+          quiz: quizIdToUse,
           text: q.question,
+          image: q.image ?? null,
           points: 900,
           time: q.timeLimit,
           answerType: q.answerType,
@@ -90,14 +144,23 @@ export function useQuizCreate() {
         }
       }
 
-      await updateQuizQuestions(quizId, questionIds);
+      await updateQuizQuestions(quizIdToUse, questionIds);
 
-      const goHost = window.confirm(`Quiz guardado! Código de sala: ${pin}\n\n¿Iniciar el quiz ahora como host?`);
-      navigate(goHost ? `/host/${pin}` : "/");
+      if (isEditing) {
+        const goHost = window.confirm(
+          `Quiz actualizado! Código de sala: ${quizPin}\n\n¿Iniciar el quiz ahora como host?`
+        );
+        navigate(goHost ? `/host/${quizPin}` : "/admin/library");
+      } else {
+        const pin = window._savedPin;
+        delete window._savedPin;
+        const goHost = window.confirm(`Quiz guardado! Código de sala: ${pin}\n\n¿Iniciar el quiz ahora como host?`);
+        navigate(goHost ? `/host/${pin}` : "/");
+      }
 
     } catch (error) {
       console.error("Error saving quiz:", error);
-      alert("Error al guardar el quiz. Verifica que el servidor esté corriendo.");
+      alert("Error al guardar. Verifica que el servidor esté corriendo.");
     } finally {
       setSaving(false);
     }
@@ -107,7 +170,8 @@ export function useQuizCreate() {
     title, setTitle,
     questions, setQuestions,
     active, activeIndex, setActiveIndex,
-    saving,
+    saving, loading, isEditing,
+    quizPin,
     updateActive, addQuestion, deleteQuestion, saveQuiz,
   };
 }

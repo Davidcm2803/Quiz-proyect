@@ -1,4 +1,5 @@
-import QuizNavbar from "../components/layout/Quiznavbar";
+import { useParams } from "react-router-dom";
+import QuizNavbar from "../components/quiz/Quiznavbar";
 import QuizEditor from "../components/quiz/QuizEditor";
 import QuizMobileBar from "../components/quiz/QuizMobileBar";
 import QuestionSidebar from "../components/quiz/Questionsidebar";
@@ -6,7 +7,16 @@ import QuizSidebar from "../components/quiz/Quizsidebar";
 import { useQuizCreate } from "../hooks/useQuizCreate";
 
 export default function QuizCreate() {
-  const quiz = useQuizCreate();
+  const { quizId } = useParams(); 
+  const quiz = useQuizCreate(quizId);
+
+  if (quiz.loading) return (
+    <div className="h-screen flex items-center justify-center bg-[#f5f5f5]">
+      <div className="w-8 h-8 border-4 border-gray-200 border-t-[#5b4fe9] rounded-full animate-spin" />
+    </div>
+  );
+
+  if (!quiz.active) return null;
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[#f5f5f5]">

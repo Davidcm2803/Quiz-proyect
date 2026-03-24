@@ -11,8 +11,12 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
 class User(BaseModel):
     username: str
     email: EmailStr
     role: str = "player"
     createdAt: Optional[datetime] = None
+
+class GoogleLoginRequest(BaseModel):
+    id_token: str

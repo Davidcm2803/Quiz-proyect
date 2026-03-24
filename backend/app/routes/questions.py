@@ -16,6 +16,7 @@ def create_question(question: QuestionCreate):
         "points": question.points,
         "time": question.time,
         "answerType": question.answerType,
+        "image": question.image,
     })
     return {"id": str(result.inserted_id)}
 
