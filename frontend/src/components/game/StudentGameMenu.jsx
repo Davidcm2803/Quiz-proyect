@@ -1,15 +1,25 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import AnswerButtons from "../ui/AnswerButtons";
 import ScoreBoard from "./ScoreBoard";
+import FloatingDecorations from "../ui/FloatingDecorations";
+import quizsong from "../../assets/quizsong.mp3";
 
 const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8000";
 const COLORS = ["bg-[#e21b3c]", "bg-[#1368ce]", "bg-[#d89e00]", "bg-[#26890c]"];
 const ICONS = ["▲", "◆", "●", "■"];
 
+const playSound = (src, volume = 0.6) => {
+  const audio = new Audio(src);
+  audio.volume = volume;
+  audio.play().catch(() => {});
+};
+
 export default function StudentGameMenu() {
   const { roomId, playerId } = useParams();
+  const navigate = useNavigate();
   const ws = useRef(null);
+  const audioRef = useRef(null);
 
   const [phase, setPhase] = useState("waiting");
   const [players, setPlayers] = useState([]);
@@ -21,17 +31,32 @@ export default function StudentGameMenu() {
   const countdownRef = useRef(null);
 
   useEffect(() => {
+    const audio = new Audio(quizsong);
+    audio.loop = true;
+    audio.volume = 0.4;
+    audioRef.current = audio;
+    return () => { audio.pause(); audio.src = ""; };
+  }, []);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (["waiting", "starting", "question", "result", "ranking"].includes(phase)) {
+      audio.play().catch(() => {});
+    } else {
+      audio.pause();
+    }
+  }, [phase]);
+
+  useEffect(() => {
     ws.current = new WebSocket(`${WS_URL}/ws/${roomId}/${playerId}`);
     ws.current.onopen = () => ws.current.send(JSON.stringify({ event: "joinRoom" }));
     ws.current.onmessage = (e) => {
       const data = JSON.parse(e.data);
-
       if (data.event === "playerJoined")
         setPlayers((prev) => prev.includes(data.playerId) ? prev : [...prev, data.playerId]);
-
       if (data.event === "quizStarted")
         setPhase("starting");
-
       if (data.event === "newQuestion") {
         const isMultiple = data.question?.answerType === "multiple";
         setQuestion(data.question);
@@ -40,13 +65,11 @@ export default function StudentGameMenu() {
         setPhase("question");
         startCountdown(data.question?.time || 20);
       }
-
       if (data.event === "scoreUpdate") {
         setScores(data.scores);
         setPhase("ranking");
         clearInterval(countdownRef.current);
       }
-
       if (data.event === "quizEnded") {
         setScores(data.scores);
         setPhase("finished");
@@ -70,21 +93,17 @@ export default function StudentGameMenu() {
   const submitAnswer = (i) => {
     if (!question) return;
     const isMultiple = question.answerType === "multiple";
-
     if (isMultiple) {
       if (i === "confirm") {
         const correctIndexes = question.answers
           .map((a, idx) => a.is_correct ? idx : null)
           .filter((v) => v !== null);
-
         const totalCorrect = correctIndexes.length;
         const acertadas = selected.filter((s) => correctIndexes.includes(s)).length;
         const incorrectas = selected.filter((s) => !correctIndexes.includes(s)).length;
-
         const points = incorrectas > 0 ? 0 : Math.round((acertadas / totalCorrect) * 100);
         const allCorrect = acertadas === totalCorrect && incorrectas === 0;
         const partial = points > 0 && !allCorrect;
-
         clearInterval(countdownRef.current);
         ws.current.send(JSON.stringify({
           event: "submitAnswer",
@@ -92,6 +111,9 @@ export default function StudentGameMenu() {
           answer: allCorrect ? "correct" : partial ? "partial" : "wrong",
           points,
         }));
+        if (allCorrect) playSound("https://cdn.freesound.org/previews/341/341695_5858296-lq.mp3");
+        else if (partial) playSound("https://cdn.freesound.org/previews/341/341695_5858296-lq.mp3", 0.3);
+        else playSound("https://cdn.freesound.org/previews/142/142608_1840739-lq.mp3");
         setResult({ correct: allCorrect, partial, points });
         setPhase("showAnswer");
       } else {
@@ -111,9 +133,16 @@ export default function StudentGameMenu() {
         answer: isCorrect ? "correct" : "wrong",
         points: isCorrect ? 100 : 0,
       }));
+      if (isCorrect) playSound("https://cdn.freesound.org/previews/341/341695_5858296-lq.mp3");
+      else playSound("https://cdn.freesound.org/previews/142/142608_1840739-lq.mp3");
       setResult({ correct: isCorrect, partial: false, points: isCorrect ? 100 : 0 });
       setPhase("showAnswer");
     }
+  };
+
+  const handleVerResultado = () => {
+    playSound("https://cdn.freesound.org/previews/220/220173_4100884-lq.mp3", 0.5);
+    setPhase("result");
   };
 
   if (phase === "waiting") return (
@@ -142,26 +171,38 @@ export default function StudentGameMenu() {
   if (phase === "question" && question) {
     const isMultiple = question.answerType === "multiple";
     return (
-      <div className="min-h-screen bg-[#1a1a2e] flex flex-col">
-        <div className="h-2 bg-white/10">
+      <div className="min-h-screen bg-[#1a1a2e] flex flex-col relative overflow-hidden">
+        <FloatingDecorations />
+        <div className="h-2 bg-white/10 relative z-10">
           <div className="h-full bg-[#e21b3c] transition-all duration-1000" style={{ width: `${(countdown / (question.time || 20)) * 100}%` }} />
         </div>
-        <div className="flex-1 flex flex-col items-center justify-between px-4 py-8">
-          <div className="text-center max-w-lg">
+        <div className="flex-1 flex flex-col items-center justify-between px-3 sm:px-6 lg:px-12 py-3 sm:py-5 gap-3 sm:gap-5 relative z-10">
+          <div className={`text-4xl sm:text-5xl lg:text-6xl font-black tabular-nums ${countdown <= 5 ? "text-[#e21b3c] animate-pulse" : "text-white"}`}>
+            {countdown}s
+          </div>
+          <div className="w-full max-w-2xl lg:max-w-4xl flex flex-col items-center gap-2 sm:gap-3">
             {isMultiple && (
-              <span className="bg-white/10 text-white/60 text-xs font-semibold px-3 py-1 rounded-full mb-3 inline-block">
+              <span className="bg-white/10 text-white/60 text-xs sm:text-sm font-semibold px-3 py-1 rounded-full">
                 Selección múltiple — puedes elegir varias
               </span>
             )}
-            <h2 className="text-white text-2xl md:text-3xl font-black mt-2">{question.text}</h2>
+            <h2 className="text-white text-2xl sm:text-3xl lg:text-5xl font-black text-center leading-tight px-2">
+              {question.text}
+            </h2>
+            {question.image && (
+              <div className="w-full max-w-xs sm:max-w-xl lg:max-w-2xl mx-auto rounded-2xl sm:rounded-3xl overflow-hidden shadow-[0_12px_48px_rgba(0,0,0,0.5)] mt-2">
+                <img src={question.image} alt="" className="w-full h-36 sm:h-56 lg:h-72 object-cover" />
+              </div>
+            )}
           </div>
-          <div className={`text-6xl font-black ${countdown <= 5 ? "text-[#e21b3c]" : "text-white"}`}>{countdown}</div>
-          <AnswerButtons
-            answers={question.answers || []}
-            selected={selected}
-            onSelect={submitAnswer}
-            answerType={question.answerType}
-          />
+          <div className="w-full max-w-2xl lg:max-w-4xl pb-2 sm:pb-4">
+            <AnswerButtons
+              answers={question.answers || []}
+              selected={selected}
+              onSelect={submitAnswer}
+              answerType={question.answerType}
+            />
+          </div>
         </div>
       </div>
     );
@@ -189,7 +230,7 @@ export default function StudentGameMenu() {
         })}
       </div>
       <button
-        onClick={() => setPhase("result")}
+        onClick={handleVerResultado}
         className="bg-white text-[#1a1a1a] font-bold px-8 py-3 rounded-2xl transition-all active:scale-95 mt-2"
       >
         Ver resultado
@@ -223,11 +264,16 @@ export default function StudentGameMenu() {
     </div>
   );
 
-
   if (phase === "finished") return (
     <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center gap-6 px-4">
       <h2 className="text-white text-4xl font-black">¡Quiz finalizado!</h2>
       <ScoreBoard scores={scores} currentPlayer={playerId} />
+      <button
+        onClick={() => navigate("/join")}
+        className="bg-[#1a1a1a] hover:bg-[#333] text-white font-bold px-8 py-4 rounded-2xl transition-all active:scale-95 mt-2"
+      >
+        Volver a unirse →
+      </button>
     </div>
   );
 

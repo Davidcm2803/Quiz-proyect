@@ -45,7 +45,7 @@ export async function getAnswer(questionId, answerId) {
  * @returns {Promise<Question>}
  */
 export async function createQuestion(payload) {
-  const res = await fetch(`${API_URL}/questions`, {
+  const res = await fetch(`${API_URL}/questions/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -68,7 +68,6 @@ export async function createAnswer(payload) {
       is_correct: payload.is_correct,
     }),
   });
-
   if (!res.ok) throw new Error("Failed to create answer");
   return res.json();
 }
@@ -85,9 +84,9 @@ export async function createQuiz(payload) {
       title: payload.title,
       description: payload.description,
       creator: payload.creator,
+      image: payload.image ?? null,
     }),
   });
-
   if (!res.ok) throw new Error("Failed to create quiz");
   return res.json();
 }
@@ -105,6 +104,26 @@ export async function updateQuizQuestions(quizId, questionIds) {
       questions: questionIds,
     }),
   });
-
   if (!res.ok) throw new Error("Failed to update quiz questions");
+}
+
+/**
+ * @param {string} quizId
+ * @returns {Promise<Quiz>}
+ */
+export async function getQuizFull(quizId) {
+  const res = await fetch(`${API_URL}/quizzes/full/${quizId}`);
+  if (!res.ok) throw new Error("Failed to fetch quiz");
+  return res.json();
+}
+
+/**
+ * @param {string} quizId
+ * @returns {Promise<void>}
+ */
+export async function deleteQuiz(quizId) {
+  const res = await fetch(`${API_URL}/quizzes/${quizId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete quiz");
 }

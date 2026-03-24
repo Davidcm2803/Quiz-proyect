@@ -15,6 +15,7 @@ def create_quiz(quiz: QuizCreate):
         "title": quiz.title,
         "description": quiz.description,
         "creator": ObjectId(quiz.creator),
+        "image": quiz.image,
         "questions": [],
         "started": False,
         "pin": pin,
@@ -69,6 +70,47 @@ def get_quiz_by_pin(pin: int):
     quiz = quizzes.find_one({"pin": pin})
     return serialize_mongo(quiz)
 
+@router.get("/by-creator/{creator_id}")
+def get_quizzes_by_creator(creator_id: str):
+    result = quizzes.find({"creator": ObjectId(creator_id)})
+    return [serialize_mongo(q) for q in result]
+
+@router.get("/full/{quiz_id}")
+def get_quiz_full_by_id(quiz_id: str):
+    quiz = quizzes.find_one({"_id": ObjectId(quiz_id)})
+    if not quiz:
+        return None
+
+    question_ids = quiz.get("questions", [])
+    result = serialize_mongo(quiz.copy())
+    full_questions = []
+
+    for qid in question_ids:
+        oid = qid if isinstance(qid, ObjectId) else ObjectId(str(qid))
+        question = questions.find_one({"_id": oid})
+        if not question:
+            continue
+        q = serialize_mongo(question.copy())
+        q["answers"] = [
+            serialize_mongo(a.copy())
+            for a in answers.find({"question": oid})
+        ]
+        full_questions.append(q)
+
+    result["questions"] = full_questions
+    return result
+
+
+@router.put("/{quiz_id}")
+def update_quiz_full(quiz_id: str, payload: dict):
+    quizzes.update_one(
+        {"_id": ObjectId(quiz_id)},
+        {"$set": {
+            "title": payload.get("title"),
+            "image": payload.get("image"),
+        }}
+    )
+    return {"ok": True}
 
 @router.get("/{quiz_id}")
 def get_quiz(quiz_id: str):
@@ -78,5 +120,15 @@ def get_quiz(quiz_id: str):
 
 @router.delete("/{quiz_id}")
 def delete_quiz(quiz_id: str):
-    quizzes.delete_one({"_id": ObjectId(quiz_id)})
+    oid = ObjectId(quiz_id)
+    quiz_questions = questions.find({"quiz": oid})
+    question_ids = [q["_id"] for q in quiz_questions]
+    # borrar respuestas de esas preguntas
+    if question_ids:
+        answers.delete_many({"question": {"$in": question_ids}})
+    # borrar preguntas del quiz
+    questions.delete_many({"quiz": oid})
+    # borrar el quiz
+    quizzes.delete_one({"_id": oid})
+    
     return {"ok": True}

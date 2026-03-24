@@ -4,6 +4,7 @@ def serialize_mongo(doc):
     if not doc:
         return None
 
+    doc["id"] = str(doc["_id"]) 
     doc["_id"] = str(doc["_id"])
 
     for key, value in doc.items():

@@ -2,9 +2,19 @@ from fastapi import APIRouter, HTTPException
 from bson import ObjectId
 from datetime import datetime
 from app.db import db
-from app.models.user import UserCreate, UserLogin
+from app.models.user import UserCreate, UserLogin, GoogleLoginRequest
 from app.utils.serializers import serialize_mongo
 from app.utils.security import hash_password, verify_password, create_access_token
+from firebase_admin import credentials, auth as firebase_auth
+import firebase_admin
+import os
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+cred = credentials.Certificate(os.path.join(BASE_DIR, "serviceAccountKey.json"))
+
+if not firebase_admin._apps:
+    cred = credentials.Certificate("serviceAccountKey.json")
+    firebase_admin.initialize_app(cred)
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -16,12 +26,7 @@ def create_user(user: UserCreate):
         if users.find_one({"email": user.email}):
             raise HTTPException(status_code=400, detail="El email ya está registrado")
 
-        print("PASSWORD RECIBIDA:", repr(user.password))
-        print("LARGO:", len(user.password))
-        print("BYTES:", len(user.password.encode("utf-8")))
-
         hashed_password = hash_password(user.password)
-        print("HASH OK")
 
         result = users.insert_one({
             "username": user.username,
@@ -31,7 +36,6 @@ def create_user(user: UserCreate):
             "createdAt": datetime.utcnow(),
         })
 
-        print("INSERT OK", result.inserted_id)
         return {
             "id": str(result.inserted_id),
             "message": "Usuario creado correctamente"
@@ -40,7 +44,6 @@ def create_user(user: UserCreate):
     except HTTPException:
         raise
     except Exception as e:
-        print("ERROR EN CREATE_USER:", repr(e))
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -72,6 +75,50 @@ def login_user(user: UserLogin):
             "role": db_user.get("role", "player")
         }
     }
+
+
+@router.post("/google-login")
+def google_login(body: GoogleLoginRequest):
+    try:
+        decoded = firebase_auth.verify_id_token(body.id_token)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Token de Google inválido")
+
+    email = decoded.get("email")
+    name = decoded.get("name", email.split("@")[0])
+
+    db_user = users.find_one({"email": email})
+
+    if not db_user:
+        result = users.insert_one({
+            "username": name,
+            "email": email,
+            "password": None,
+            "role": "player",
+            "createdAt": datetime.utcnow(),
+        })
+        db_user = users.find_one({"_id": result.inserted_id})
+
+    access_token = create_access_token(
+        data={
+            "sub": str(db_user["_id"]),
+            "email": db_user["email"],
+            "role": db_user.get("role", "player")
+        }
+    )
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {
+            "id": str(db_user["_id"]),
+            "username": db_user["username"],
+            "email": db_user["email"],
+            "role": db_user.get("role", "player")
+        }
+    }
+
+
 @router.get("/")
 def get_users():
     return [serialize_mongo(u) for u in users.find()]
