@@ -4,9 +4,8 @@ const FOOTER_LINKS = ["¿Qué hay de nuevo?", "Ponte en contacto", "Documentacio
 
 export default function AdminSidebar() {
   return (
-    <aside className="w-56 h-[calc(100vh-4rem)] bg-white border-r border-gray-100 flex flex-col overflow-y-auto flex-shrink-0">
+    <aside className="hidden md:flex w-56 h-[calc(100vh-4rem)] bg-white border-r border-gray-100 flex-col overflow-y-auto flex-shrink-0">
       <SidebarItems />
-
       <div className="border-t border-gray-100 px-2 py-3 space-y-0.5">
         {FOOTER_LINKS.map((label) => (
           <button

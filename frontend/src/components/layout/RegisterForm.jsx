@@ -1,10 +1,10 @@
 import { useState } from "react";
 import IconButton from "../ui/IconButtons";
 import LoginButton from "../ui/LoginButton";
-import { GoogleIcon, MicrosoftIcon, AppleIcon, OtherIcon } from "../ui/Icons";
+import { GoogleIcon, MicrosoftIcon } from "../ui/Icons";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { signInWithGoogle } from "../../firebase/firebase";
+import { signInWithGoogle, signInWithMicrosoft } from "../../firebase/firebase";
 
 export default function RegisterForm() {
   const [username, setUsername] = useState("");
@@ -87,8 +87,46 @@ export default function RegisterForm() {
         setError("Allow popups for this site and try again.");
         return;
       }
+      if (error.code === "auth/account-exists-with-different-credential") {
+        setError("An account already exists with this email. Try logging in with a different method.");
+        return;
+      }
       console.error(error);
       setError("Google sign up error");
+    }
+  };
+
+  const handleMicrosoftRegister = async () => {
+    try {
+      const result = await signInWithMicrosoft();
+      if (!result) return;
+
+      const response = await fetch("http://localhost:8000/users/microsoft-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id_token: result.idToken }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.detail || "Microsoft sign up failed");
+        return;
+      }
+
+      login(data.access_token, data.user);
+      navigate("/");
+    } catch (error) {
+      if (error.message === "POPUP_BLOCKED") {
+        setError("Allow popups for this site and try again.");
+        return;
+      }
+      if (error.code === "auth/account-exists-with-different-credential") {
+        setError("An account already exists with this email. Try logging in with a different method.");
+        return;
+      }
+      console.error(error);
+      setError("Microsoft sign up error");
     }
   };
 
@@ -102,9 +140,7 @@ export default function RegisterForm() {
         <div className="flex gap-2.5 mb-4">
           {[
             { icon: <GoogleIcon />, label: "Google", onClick: handleGoogleRegister },
-            { icon: <MicrosoftIcon />, label: "Microsoft", onClick: () => {} },
-            { icon: <AppleIcon />, label: "Apple", onClick: () => {} },
-            { icon: <OtherIcon />, label: "Other", onClick: () => {} },
+            { icon: <MicrosoftIcon />, label: "Microsoft", onClick: handleMicrosoftRegister },
           ].map(({ icon, label, onClick }) => (
             <IconButton key={label} icon={icon} label={label} onClick={onClick} />
           ))}

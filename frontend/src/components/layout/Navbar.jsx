@@ -72,6 +72,7 @@ export default function Navbar() {
         navItems={NAV_ITEMS}
         location={location}
         navigate={navigate}
+        user={user}
       />
     </>
   );
