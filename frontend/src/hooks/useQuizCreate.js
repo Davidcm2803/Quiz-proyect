@@ -37,6 +37,7 @@ export function useQuizCreate(quizId = null) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!!quizId);
+  const [quizPin, setQuizPin] = useState(null);
 
   const isEditing = !!quizId;
 
@@ -46,6 +47,7 @@ export function useQuizCreate(quizId = null) {
       .then((data) => {
         setTitle(data.title);
         setQuestions(data.questions.map(mapQuestion));
+        setQuizPin(data.pin);
       })
       .catch(() => alert("Error cargando el quiz"))
       .finally(() => setLoading(false));
@@ -106,7 +108,6 @@ export function useQuizCreate(quizId = null) {
           }),
         });
 
-        // borrar preguntas viejas antes crear
         await fetch(`${API_URL}/questions/by-quiz/${quizId}`, {
           method: "DELETE",
         });
@@ -146,8 +147,10 @@ export function useQuizCreate(quizId = null) {
       await updateQuizQuestions(quizIdToUse, questionIds);
 
       if (isEditing) {
-        alert("Quiz actualizado correctamente");
-        navigate("/admin/library");
+        const goHost = window.confirm(
+          `Quiz actualizado! Código de sala: ${quizPin}\n\n¿Iniciar el quiz ahora como host?`
+        );
+        navigate(goHost ? `/host/${quizPin}` : "/admin/library");
       } else {
         const pin = window._savedPin;
         delete window._savedPin;
@@ -168,6 +171,7 @@ export function useQuizCreate(quizId = null) {
     questions, setQuestions,
     active, activeIndex, setActiveIndex,
     saving, loading, isEditing,
+    quizPin,
     updateActive, addQuestion, deleteQuestion, saveQuiz,
   };
 }
