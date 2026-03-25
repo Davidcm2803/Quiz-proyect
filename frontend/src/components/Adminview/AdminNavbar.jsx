@@ -97,7 +97,7 @@ function UserDropdown({ user, logout }) {
             <p className="text-sm font-semibold text-gray-700 truncate">{user.username}</p>
           </div>
           <button
-            onClick={() => { navigate("/profile"); setOpen(false); }}
+            onClick={() => { navigate("/admin"); setOpen(false); }}
             className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
           >
             <User size={15} className="text-gray-400" />
