@@ -12,8 +12,8 @@ const validate = (val, current) => {
   if (!val.trim())      return "El nombre no puede estar vacío.";
   if (val.length < MIN) return `Mínimo ${MIN} caracteres.`;
   if (val.length > MAX) return `Máximo ${MAX} caracteres.`;
-  if (!REGEX.test(val)) return "Solo letras, números, puntos y guiones bajos.";
-  if (val === current)  return "Es el mismo nombre que tienes ahora.";
+  if (!REGEX.test(val)) return "No se pueden espacios";
+  if (val === current)  return "Es el mismo nombre que tienes ahora :///";
   return "";
 };
 

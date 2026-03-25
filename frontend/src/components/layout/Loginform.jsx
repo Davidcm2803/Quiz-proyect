@@ -2,7 +2,7 @@ import { useState } from "react";
 import IconButton from "../ui/IconButtons";
 import LoginButton from "../ui/LoginButton";
 import { GoogleIcon, MicrosoftIcon } from "../ui/Icons";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { signInWithGoogle, signInWithMicrosoft, resetPassword } from "../../firebase/firebase";
 
@@ -10,7 +10,6 @@ export default function LoginForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [focusedField, setFocusedField] = useState(null);
-  const navigate = useNavigate();
   const [error, setError] = useState("");
   const [resetEmail, setResetEmail] = useState("");
   const [showReset, setShowReset] = useState(false);
@@ -18,32 +17,42 @@ export default function LoginForm() {
   const { login } = useAuth();
 
   const handleLogin = async () => {
+    console.log("1. handleLogin called");
+    console.log("username:", username, "password:", password);
+
     try {
       if (!username || !password) {
         setError("Please fill all fields");
+        console.log("2. empty fields");
         return;
       }
 
+      console.log("3. sending fetch...");
       const response = await fetch("http://localhost:8000/users/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: username, password: password }),
       });
 
+      console.log("4. response status:", response.status);
       const data = await response.json();
+      console.log("5. data:", data);
 
       if (!response.ok) {
         const msg = Array.isArray(data.detail)
           ? data.detail[0]?.msg || "Error de validación"
           : data.detail || "Login failed";
         setError(msg);
+        console.log("6. not ok:", msg);
         return;
       }
 
+      console.log("7. calling login()");
       login(data.access_token, data.user);
-      navigate("/");
-    } catch (error) {
-      console.error(error);
+      console.log("8. calling window.location.href");
+      window.location.href = "/";
+    } catch (err) {
+      console.error("CATCH ERROR:", err);
       setError("Server connection error");
     }
   };
@@ -53,28 +62,21 @@ export default function LoginForm() {
       const result = await signInWithGoogle();
       if (!result) return;
 
-      setTimeout(async () => {
-        try {
-          const response = await fetch("http://localhost:8000/users/google-login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id_token: result.idToken }),
-          });
+      const response = await fetch("http://localhost:8000/users/google-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id_token: result.idToken }),
+      });
 
-          const data = await response.json();
+      const data = await response.json();
 
-          if (!response.ok) {
-            setError(data.detail || "Google login failed");
-            return;
-          }
+      if (!response.ok) {
+        setError(data.detail || "Google login failed");
+        return;
+      }
 
-          login(data.access_token, data.user);
-          navigate("/");
-        } catch (err) {
-          console.error(err);
-          setError("Google login error");
-        }
-      }, 500);
+      login(data.access_token, data.user);
+      window.location.href = "/";
     } catch (error) {
       if (error.message === "POPUP_BLOCKED") {
         setError("Allow popups for this site and try again.");
@@ -104,7 +106,7 @@ export default function LoginForm() {
       }
 
       login(data.access_token, data.user);
-      navigate("/");
+      window.location.href = "/";
     } catch (error) {
       if (error.message === "POPUP_BLOCKED") {
         setError("Allow popups for this site and try again.");
