@@ -55,6 +55,9 @@ def login_user(user: UserLogin):
     if not db_user:
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
 
+    if not db_user.get("password"):
+        raise HTTPException(status_code=401, detail="Esta cuenta usa Google o Microsoft para iniciar sesión")
+
     if not verify_password(user.password, db_user["password"]):
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
 

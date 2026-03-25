@@ -104,11 +104,17 @@ export default function ChangePasswordModal({ onClose }) {
         body: JSON.stringify({ current_password: current, new_password: next }),
       });
       const data = await res.json();
-      if (!res.ok) throw data;
+      if (!res.ok) {
+        const msg = Array.isArray(data.detail)
+          ? data.detail[0]?.msg || "Error de validación"
+          : data.detail || "No se pudo actualizar la contraseña.";
+        setError(msg);
+        return;
+      }
       setSuccess(true);
       setTimeout(() => { setSuccess(false); onClose(); }, 1600);
     } catch (e) {
-      setError(e?.detail ?? "No se pudo actualizar la contraseña.");
+      setError("No se pudo actualizar la contraseña.");
     } finally {
       setLoading(false);
     }
