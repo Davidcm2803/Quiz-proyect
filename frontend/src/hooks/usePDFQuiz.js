@@ -1,7 +1,6 @@
 import { useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker?url";
-import { fetchImage } from "./useQuizAI";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
@@ -35,7 +34,7 @@ export default function usePDFQuiz({
     return text.replace(/```json|```/g, "").trim();
   }
 
-  async function importFromPDF(file, imageSource) {
+  async function importFromPDF(file) {
   try {
     console.log("KEY:", import.meta.env.VITE_QHIT_KEY);
 
@@ -123,10 +122,7 @@ Devuelve SOLO JSON válido sin texto extra:
       const formatted = await Promise.all(
         parsed.questions.map(async (q) => ({
           question: q.question || "",
-          image:
-            imageSource === "unsplash"
-              ? await fetchImage(q.question)
-              : null,
+          image: null,
           answers: q.answers || ["", "", "", ""],
           correct: Array.isArray(q.correct)
             ? q.correct
