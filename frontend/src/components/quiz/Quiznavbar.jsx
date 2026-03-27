@@ -18,7 +18,7 @@ export default function QuizNavbar({ title, onTitleChange, onExit, onSave, savin
         value={title}
         onChange={(e) => onTitleChange(e.target.value)}
         placeholder="Quiz title"
-        className="flex-1 min-w-0 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-gray-300 transition-all"
+        className="w-40 sm:w-56 md:w-100 mx-auto bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 outline-none focus:ring-2 focus:ring-gray-300 transition-all text-center"
       />
       <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
         <Button variant="exit" onClick={onExit ?? (() => navigate("/"))}>
@@ -26,8 +26,16 @@ export default function QuizNavbar({ title, onTitleChange, onExit, onSave, savin
           <span className="sm:hidden">✕</span>
         </Button>
         <Button variant="save" onClick={onSave} disabled={saving}>
-          {saving ? <span className="hidden sm:inline">Guardando...</span> : <span className="hidden sm:inline">Save</span>}
-          {saving ? <span className="sm:hidden">...</span> : <span className="sm:hidden">✓</span>}
+          {saving ? (
+            <span className="hidden sm:inline">Guardando...</span>
+          ) : (
+            <span className="hidden sm:inline">Save</span>
+          )}
+          {saving ? (
+            <span className="sm:hidden">...</span>
+          ) : (
+            <span className="sm:hidden">✓</span>
+          )}
         </Button>
       </div>
     </nav>

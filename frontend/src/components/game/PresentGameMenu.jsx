@@ -1,39 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import AnswerButtons from "../ui/AnswerButtons";
 import ScoreBoard from "./ScoreBoard";
 import FloatingDecorations from "../ui/FloatingDecorations";
 import quizsong from "../../assets/quizsong.mp3";
-import { getQuizFullByPin } from "../../database/database";
 import { useGameAnswer } from "../../hooks/useGameAnswer";
 
 const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8000";
 
-function useCountdownToDate(targetDateStr) {
-  const [timeLeft, setTimeLeft] = useState(null);
-  useEffect(() => {
-    if (!targetDateStr) return;
-    const target = new Date(targetDateStr).getTime();
-    const tick = () => setTimeLeft(Math.max(0, target - Date.now()));
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [targetDateStr]);
-  return timeLeft;
-}
+const COLORS = ["bg-[#e21b3c]", "bg-[#1368ce]", "bg-[#d89e00]", "bg-[#26890c]"];
+const ICONS = ["▲", "◆", "●", "■"];
 
-function formatCountdown(ms) {
-  if (ms === null) return "";
-  const s = Math.floor(ms / 1000);
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
-  if (h > 0) return `${h}h ${m}m ${sec}s`;
-  if (m > 0) return `${m}m ${sec}s`;
-  return `${sec}s`;
-}
-
-export default function StudentGameMenu({ mode }) {
+export default function PresentGameMenu() {
   const { roomId, playerId } = useParams();
   const navigate = useNavigate();
 
@@ -41,12 +18,8 @@ export default function StudentGameMenu({ mode }) {
   const audioRef = useRef(null);
 
   const [phase, setPhase] = useState("waiting");
-  const [players, setPlayers] = useState([]);
   const [question, setQuestion] = useState(null);
   const [scores, setScores] = useState({});
-  const [scheduledAt, setScheduledAt] = useState(null);
-
-  const timeLeft = useCountdownToDate(scheduledAt);
 
   const { countdown, startCountdown, selected, result, submitAnswer, resetAnswer } =
     useGameAnswer({
@@ -54,14 +27,6 @@ export default function StudentGameMenu({ mode }) {
       ws,
       onAnswered: () => setPhase("showAnswer"),
     });
-
-  useEffect(() => {
-    if (mode === "normal" || mode === "autonomo") {
-      getQuizFullByPin(roomId)
-        .then((data) => data?.scheduled_at && setScheduledAt(data.scheduled_at))
-        .catch(() => {});
-    }
-  }, [mode, roomId]);
 
   useEffect(() => {
     const audio = new Audio(quizsong);
@@ -74,7 +39,7 @@ export default function StudentGameMenu({ mode }) {
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    if (["waiting", "starting", "question", "result", "ranking"].includes(phase)) {
+    if (["waiting", "starting", "question", "ranking"].includes(phase)) {
       audio.play().catch(() => {});
     } else {
       audio.pause();
@@ -91,11 +56,6 @@ export default function StudentGameMenu({ mode }) {
     ws.current.onmessage = (e) => {
       const data = JSON.parse(e.data);
 
-      if (data.event === "playerJoined") {
-        setPlayers((prev) =>
-          prev.includes(data.playerId) ? prev : [...prev, data.playerId]
-        );
-      }
       if (data.event === "quizStarted") setPhase("starting");
 
       if (data.event === "newQuestion") {
@@ -120,39 +80,18 @@ export default function StudentGameMenu({ mode }) {
     return () => ws.current?.close();
   }, [roomId, playerId]);
 
-  if (phase === "waiting") {
-    const notYet = scheduledAt && timeLeft > 0;
-    return (
-      <div className="min-h-screen bg-[#F8FBF3] flex flex-col items-center justify-center gap-6 px-4">
-        <h2 className="text-[#292726] text-3xl font-black">¡Listo, {playerId}!</h2>
-        {notYet ? (
-          <>
-            <p className="text-[#292726]/60">Empieza en:</p>
-            <div className="bg-[#1a1a2e] text-white text-5xl font-black px-10 py-6 rounded-3xl">
-              {formatCountdown(timeLeft)}
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="text-[#292726]/60">Esperando que el host inicie...</p>
-            <div className="flex gap-1.5">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="w-2 h-2 bg-[#e21b3c] rounded-full animate-bounce"
-                  style={{ animationDelay: `${i * 0.2}s` }} />
-              ))}
-            </div>
-          </>
-        )}
-        {players.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-2">
-            {players.map((p, i) => (
-              <span key={i} className="bg-[#1a1a2e]/10 px-3 py-1 rounded-full text-sm">{p}</span>
-            ))}
-          </div>
-        )}
+  if (phase === "waiting") return (
+    <div className="min-h-screen bg-[#F8FBF3] flex flex-col items-center justify-center gap-6 px-4">
+      <h2 className="text-[#292726] text-3xl font-black">¡Listo, {playerId}!</h2>
+      <p className="text-[#292726]/60">Esperando que el host inicie...</p>
+      <div className="flex gap-1.5 mt-2">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="w-2 h-2 bg-[#e21b3c] rounded-full animate-bounce"
+            style={{ animationDelay: `${i * 0.2}s` }} />
+        ))}
       </div>
-    );
-  }
+    </div>
+  );
 
   if (phase === "starting") return (
     <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center">
@@ -161,7 +100,9 @@ export default function StudentGameMenu({ mode }) {
   );
 
   if (phase === "question" && question) {
-    const hasImage = !!question.image;
+    const isMultiple = question.answerType === "multiple";
+    const selectedArr = Array.isArray(selected) ? selected : [];
+
     return (
       <div className="min-h-screen bg-[#1a1a2e] flex flex-col relative overflow-hidden">
         <FloatingDecorations />
@@ -169,34 +110,51 @@ export default function StudentGameMenu({ mode }) {
           <div className="h-full bg-[#e21b3c] transition-all duration-1000"
             style={{ width: `${(countdown / (question.time || 20)) * 100}%` }} />
         </div>
-        <div className="flex-1 flex flex-col items-center gap-4 px-4 py-5 relative z-10">
-          <div className={`text-5xl font-black tabular-nums ${countdown <= 5 ? "text-[#e21b3c] animate-pulse" : "text-white"}`}>
-            {countdown}s
-          </div>
-          {question.answerType === "multiple" && (
-            <span className="bg-white/10 text-white/50 text-xs font-semibold px-3 py-1 rounded-full mb-3 inline-block">
-              Selección múltiple
-            </span>
-          )}
-          <h2 className="text-white font-bold text-center text-2xl sm:text-5xl w-full max-w-5xl pb-4">
-            {question.text}
-          </h2>
-          {hasImage && (
-            <div className="w-full max-w-3xl">
-              <img
-                src={question.image}
-                alt=""
-                className="w-full max-w-5xl max-h-[300px] sm:max-h-[380px] object-contain rounded-2xl"
-              />
+
+        <div className="flex-1 flex flex-col relative z-10">
+          <div className="flex justify-center pt-4 pb-2">
+            <div className={`text-5xl sm:text-6xl font-black tabular-nums ${countdown <= 5 ? "text-[#e21b3c] animate-pulse" : "text-white"}`}>
+              {countdown}s
             </div>
-          )}
-          <div className="w-full max-w-3xl mt-auto">
-            <AnswerButtons
-              answers={question.answers}
-              selected={selected}
-              onSelect={submitAnswer}
-              answerType={question.answerType}
-            />
+          </div>
+
+          <div className="flex-1 flex flex-col items-center justify-center px-3 sm:px-6 py-4 sm:py-6 gap-4">
+            {isMultiple && (
+              <p className="text-white/50 text-sm -mb-2">Selecciona todas las correctas</p>
+            )}
+
+            <div className="w-full max-w-3xl sm:max-w-4xl grid grid-cols-2 gap-4 sm:gap-5">
+              {question.answers.map((_, i) => {
+                const isSelected = isMultiple ? selectedArr.includes(i) : selected === i;
+                return (
+                  <button
+                    key={i}
+                    onClick={() => submitAnswer(i)}
+                    disabled={!isMultiple && selected !== null}
+                    className={`
+                      ${COLORS[i]} rounded-2xl flex items-center justify-center
+                      text-white font-black transition-all duration-150
+                      active:scale-95 shadow-xl
+                      disabled:opacity-30 disabled:cursor-not-allowed
+                      h-60 sm:h-80 text-6xl sm:text-7xl
+                      ${isSelected ? "ring-4 ring-white scale-95 brightness-110" : ""}
+                    `}
+                  >
+                    {ICONS[i]}
+                  </button>
+                );
+              })}
+            </div>
+
+            {isMultiple && (
+              <button
+                onClick={() => submitAnswer("confirm")}
+                disabled={selectedArr.length === 0}
+                className="bg-white text-[#1a1a2e] font-black text-lg px-10 py-3 rounded-2xl active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed mb-2"
+              >
+                Confirmar ({selectedArr.length})
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -204,7 +162,7 @@ export default function StudentGameMenu({ mode }) {
   }
 
   if (phase === "showAnswer") {
-    setTimeout(() => setPhase("result"), 1500);
+    setTimeout(() => setPhase("answered"), 1500);
     return (
       <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center gap-5 px-4">
         <div className="text-8xl">{result?.correct ? "✅" : result?.partial ? "🟡" : "❌"}</div>
@@ -218,7 +176,7 @@ export default function StudentGameMenu({ mode }) {
     );
   }
 
-  if (phase === "result") return (
+  if (phase === "answered") return (
     <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center gap-4 px-4">
       <div className="text-6xl">{result?.correct ? "✅" : result?.partial ? "🟡" : "❌"}</div>
       <h2 className={`text-3xl font-black ${result?.correct ? "text-green-400" : result?.partial ? "text-yellow-400" : "text-[#e21b3c]"}`}>

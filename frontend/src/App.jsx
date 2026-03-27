@@ -5,6 +5,8 @@ import Signup from "./pages/Signup";
 import Register from "./pages/Register";
 import QuizCreate from "./pages/QuizCreate";
 import StudentGame from "./pages/StudentGame";
+import Presentgame from "./pages/Presentgame";
+import PresentGameMenu from "./components/game/PresentGameMenu";
 import HostGame from "./pages/HostGame";
 import QuizAIGenerator from "./pages/QuizAIGenerator";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
@@ -21,7 +23,9 @@ export default function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/student/:roomId/:playerId" element={<StudentGame />} />
+        <Route path="/game/:roomId/:playerId" element={<PresentGameMenu />} />
         <Route path="/host/:roomId" element={<HostGame />} />
+        <Route path="/present" element={<Presentgame />} />
         {/*Lo que tiene ProtectedRoute necesita estar logueado */}
         <Route
           path="/quiz/create"

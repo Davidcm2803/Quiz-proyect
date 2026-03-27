@@ -1,9 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { createQuestion, createAnswer, createQuiz, updateQuizQuestions, getQuizFull } from "../database/database.js";
-
-const API_URL = "http://localhost:8000";
+import {
+  createQuestion,
+  createAnswer,
+  createQuiz,
+  updateQuizQuestions,
+  getQuizFull,
+  updateQuizInfo,
+} from "../database/database.js";
 
 const emptyQuestion = () => ({
   question: "",
@@ -38,6 +43,8 @@ export function useQuizCreate(quizId = null) {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!!quizId);
   const [quizPin, setQuizPin] = useState(null);
+  const [mode, setMode] = useState("normal");
+  const [scheduledAt, setScheduledAt] = useState(null);
 
   const isEditing = !!quizId;
 
@@ -48,6 +55,8 @@ export function useQuizCreate(quizId = null) {
         setTitle(data.title);
         setQuestions(data.questions.map(mapQuestion));
         setQuizPin(data.pin);
+        setMode(data.mode || "normal");
+        setScheduledAt(data.scheduled_at || null);
       })
       .catch(() => alert("Error cargando el quiz"))
       .finally(() => setLoading(false));
@@ -100,24 +109,28 @@ export function useQuizCreate(quizId = null) {
       let quizIdToUse = quizId;
 
       if (isEditing) {
-        await fetch(`${API_URL}/quizzes/${quizId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: title.trim(),
-            image: questions[0]?.image ?? null,
-          }),
+        await updateQuizInfo(quizId, {
+          title: title.trim(),
+          image: questions[0]?.image ?? null,
         });
 
-        await fetch(`${API_URL}/questions/by-quiz/${quizId}`, {
+        await updateQuizQuestions(quizId, [], {
+          mode,
+          scheduled_at: scheduledAt ?? null,
+        });
+
+        const res = await fetch(`http://localhost:8000/questions/by-quiz/${quizId}`, {
           method: "DELETE",
         });
+        if (!res.ok) throw new Error("Failed to delete questions");
       } else {
         const { id, pin: newPin } = await createQuiz({
           title: title.trim(),
           description: "",
           creator: 1,
           image: questions[0]?.image ?? null,
+          mode,
+          scheduled_at: scheduledAt ?? null,
         });
         quizIdToUse = id;
         window._savedPin = newPin;
@@ -146,7 +159,10 @@ export function useQuizCreate(quizId = null) {
         }
       }
 
-      await updateQuizQuestions(quizIdToUse, questionIds);
+      await updateQuizQuestions(quizIdToUse, questionIds, {
+        mode,
+        scheduled_at: scheduledAt ?? null,
+      });
 
       if (isEditing) {
         const goHost = window.confirm(
@@ -161,7 +177,6 @@ export function useQuizCreate(quizId = null) {
         );
         navigate(goHost ? `/host/${pin}` : "/");
       }
-
     } catch (error) {
       console.error("Error saving quiz:", error);
       alert("Error al guardar. Verifica que el servidor esté corriendo.");
@@ -176,6 +191,8 @@ export function useQuizCreate(quizId = null) {
     active, activeIndex, setActiveIndex,
     saving, loading, isEditing,
     quizPin,
+    mode, setMode,
+    scheduledAt, setScheduledAt,
     updateActive, addQuestion, deleteQuestion, saveQuiz,
   };
 }

@@ -74,7 +74,7 @@ export async function createAnswer(payload) {
 
 /**
  * @param {CreateQuizPayload} payload
- * @returns {Promise<{ id: string }>}
+ * @returns {Promise<{ id: string, pin: number }>}
  */
 export async function createQuiz(payload) {
   const res = await fetch(`${API_URL}/quizzes/`, {
@@ -85,6 +85,8 @@ export async function createQuiz(payload) {
       description: payload.description,
       creator: payload.creator,
       image: payload.image ?? null,
+      mode: payload.mode ?? "normal",
+      scheduled_at: payload.scheduled_at ?? null,
     }),
   });
   if (!res.ok) throw new Error("Failed to create quiz");
@@ -94,14 +96,16 @@ export async function createQuiz(payload) {
 /**
  * @param {string} quizId
  * @param {string[]} questionIds
+ * @param {{ mode?: string, scheduled_at?: string }} [options]
  * @returns {Promise<void>}
  */
-export async function updateQuizQuestions(quizId, questionIds) {
+export async function updateQuizQuestions(quizId, questionIds, options = {}) {
   const res = await fetch(`${API_URL}/quizzes/${quizId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       questions: questionIds,
+      ...options,
     }),
   });
   if (!res.ok) throw new Error("Failed to update quiz questions");
@@ -126,4 +130,68 @@ export async function deleteQuiz(quizId) {
     method: "DELETE",
   });
   if (!res.ok) throw new Error("Failed to delete quiz");
+}
+
+/**
+ * @param {string} quizId
+ * @param {{ mode: string, scheduled_at?: string | null }} payload
+ * @returns {Promise<void>}
+ */
+export async function updateQuizMode(quizId, payload) {
+  const res = await fetch(`${API_URL}/quizzes/${quizId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      mode: payload.mode,
+      scheduled_at: payload.scheduled_at ?? null,
+    }),
+  });
+  if (!res.ok) throw new Error("Failed to update quiz mode");
+}
+
+/**
+ * @param {string} pin
+ * @returns {Promise<Quiz>}
+ */
+export async function getQuizByPin(pin) {
+  const res = await fetch(`${API_URL}/quizzes/by-pin/${pin}`);
+  if (!res.ok) throw new Error("Quiz not found");
+  return res.json();
+}
+
+/**
+ * @param {string} pin
+ * @returns {Promise<Quiz>}
+ */
+export async function getQuizFullByPin(pin) {
+  const res = await fetch(`${API_URL}/quizzes/full/by-pin/${pin}`);
+  if (!res.ok) throw new Error("Quiz not found");
+  return res.json();
+}
+
+/**
+ * @param {string} creatorId
+ * @returns {Promise<Quiz[]>}
+ */
+export async function getQuizzesByCreator(creatorId) {
+  const res = await fetch(`${API_URL}/quizzes/by-creator/${creatorId}`);
+  if (!res.ok) throw new Error("Failed to fetch quizzes");
+  return res.json();
+}
+
+/**
+ * @param {string} quizId
+ * @param {{ title?: string, image?: string | null }} payload
+ * @returns {Promise<void>}
+ */
+export async function updateQuizInfo(quizId, payload) {
+  const res = await fetch(`${API_URL}/quizzes/${quizId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: payload.title,
+      image: payload.image ?? null,
+    }),
+  });
+  if (!res.ok) throw new Error("Failed to update quiz info");
 }

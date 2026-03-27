@@ -1,6 +1,5 @@
 import { useParams } from "react-router-dom";
 import { useEffect } from "react";
-
 import QuizNavbar from "../components/quiz/Quiznavbar";
 import QuizEditor from "../components/quiz/QuizEditor";
 import QuizMobileBar from "../components/quiz/QuizMobileBar";
@@ -9,19 +8,16 @@ import QuizSidebar from "../components/quiz/Quizsidebar";
 import { useQuizCreate } from "../hooks/useQuizCreate";
 
 export default function QuizCreate() {
-  const { quizId } = useParams(); 
+  const { quizId } = useParams();
   const quiz = useQuizCreate(quizId);
 
   useEffect(() => {
     const saved = sessionStorage.getItem("pdfQuiz");
     if (!saved) return;
-
     const data = JSON.parse(saved);
-
     quiz.setTitle(data.title);
     quiz.setQuestions(data.questions);
     quiz.setActiveIndex(0);
-
     sessionStorage.removeItem("pdfQuiz");
   }, []);
 
@@ -51,22 +47,20 @@ export default function QuizCreate() {
             onDelete={quiz.deleteQuestion}
           />
         </div>
-
-        <QuizEditor
-          question={quiz.active}
-          onUpdate={quiz.updateActive}
-        />
-
-        <div className="hidden md:flex">
+        <QuizEditor question={quiz.active} onUpdate={quiz.updateActive} />
+        <div className="hidden md:flex flex-col overflow-y-auto">
           <QuizSidebar
             timeLimit={quiz.active.timeLimit}
             onTimeChange={(val) => quiz.updateActive("timeLimit", val)}
             answerType={quiz.active.answerType}
             onAnswerTypeChange={(val) => quiz.updateActive("answerType", val)}
+            mode={quiz.mode}
+            onModeChange={quiz.setMode}
+            scheduledAt={quiz.scheduledAt}
+            onScheduledAtChange={quiz.setScheduledAt}
           />
         </div>
       </div>
-
       <QuizMobileBar
         questions={quiz.questions}
         activeIndex={quiz.activeIndex}

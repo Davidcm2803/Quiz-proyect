@@ -16,6 +16,8 @@ class QuizCreate(BaseModel):
     description: Optional[str] = ""
     creator: str
     image: Optional[str] = None
+    mode: Optional[str] = "normal"          # "normal o "presentacion"
+    scheduled_at: Optional[datetime] = None
 
 
 class Quiz(QuizCreate):
@@ -23,4 +25,3 @@ class Quiz(QuizCreate):
     started: bool = False
     pin: Optional[int] = None
     createdAt: datetime
-    

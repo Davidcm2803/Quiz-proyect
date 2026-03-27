@@ -10,15 +10,32 @@ export default function JoinMenu() {
   const [pin, setPin] = useState("");
   const [nickname, setNickname] = useState("");
   const [error, setError] = useState("");
+  const [joining, setJoining] = useState(false);
 
   const handlePin = (code) => {
     setPin(code);
     setStep("nickname");
   };
 
-  const handleJoin = () => {
+  const handleJoin = async () => {
     if (!nickname.trim()) { setError("Ingresa tu nombre"); return; }
-    navigate(`/student/${pin}/${nickname.trim()}`);
+    setJoining(true);
+    try {
+      const res = await fetch(`http://localhost:8000/quizzes/by-pin/${pin}`);
+      const quiz = await res.json();
+      const mode = quiz?.mode || "normal";
+      const name = nickname.trim();
+
+      if (mode === "presentacion") {
+        navigate(`/present/${pin}/${name}`);
+      } else {
+        navigate(`/student/${pin}/${name}`);
+      }
+    } catch {
+      setError("No se pudo conectar. Verifica el código.");
+    } finally {
+      setJoining(false);
+    }
   };
 
   return (
@@ -34,7 +51,6 @@ export default function JoinMenu() {
 
       <div className="fixed inset-0 bg-[#F8FBF3] flex items-center justify-center overflow-hidden">
         <FloatingDecorations />
-
         <div className="join-content relative z-10 flex flex-col items-center w-[min(420px,90vw)]">
           <img src={logo} alt="QHit logo" className="w-full object-contain block -mb-[90px]" />
 
@@ -54,10 +70,10 @@ export default function JoinMenu() {
               {error && <p className="text-red-500 text-sm text-center">{error}</p>}
               <button
                 onClick={handleJoin}
-                disabled={!nickname.trim()}
+                disabled={!nickname.trim() || joining}
                 className="w-full bg-black text-white font-bold text-sm py-3 rounded-xl transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                UNIRSE
+                {joining ? "Conectando..." : "UNIRSE"}
               </button>
               <button onClick={() => setStep("pin")} className="text-xs text-gray-500 underline text-center">
                 Cambiar código
