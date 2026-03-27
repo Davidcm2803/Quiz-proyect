@@ -23,9 +23,10 @@ export default function QuizAIGenerator() {
   });
 
   const handleGenerate = async () => {
-    await generateQuiz(prompt);
-    setShowEditor(true);
+    const ok = await generateQuiz(prompt);
+    if (ok) setShowEditor(true);
   };
+
   if (showEditor) {
     return (
       <div className="h-screen flex flex-col overflow-hidden bg-[#f5f5f5]">
@@ -46,12 +47,16 @@ export default function QuizAIGenerator() {
             />
           </div>
           <QuizEditor question={quiz.active} onUpdate={quiz.updateActive} />
-          <div className="hidden md:flex">
+          <div className="hidden md:flex flex-col overflow-y-auto">
             <QuizSidebar
               timeLimit={quiz.active.timeLimit}
               onTimeChange={(val) => quiz.updateActive("timeLimit", val)}
               answerType={quiz.active.answerType}
               onAnswerTypeChange={(val) => quiz.updateActive("answerType", val)}
+              mode={quiz.mode}
+              onModeChange={quiz.setMode}
+              scheduledAt={quiz.scheduledAt}
+              onScheduledAtChange={quiz.setScheduledAt}
             />
           </div>
         </div>
