@@ -17,7 +17,6 @@ const ANSWER_OPTIONS = [
 
 const MODE_OPTIONS = [
   { label: "Normal", value: "normal", icon: "🎮" },
-  { label: "Autónomo", value: "autonomo", icon: "⏱" },
   { label: "Presentación", value: "presentacion", icon: "📺" },
 ];
 
@@ -127,7 +126,7 @@ export default function QuizSidebar({
           ))}
         </select>
 
-        {mode === "autonomo" && (
+        {mode === "normal" && (
           <div className="flex flex-col gap-1.5 mt-1">
             <span className="text-xs text-gray-400">Hora de inicio</span>
             <input
@@ -136,8 +135,14 @@ export default function QuizSidebar({
               onChange={(e) => onScheduledAtChange?.(e.target.value || null)}
               className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-700 outline-none focus:ring-2 focus:ring-gray-300 focus:bg-white transition-all cursor-pointer"
             />
-            {!scheduledAt && (
-              <p className="text-xs text-amber-400">Sin hora, el host inicia manualmente.</p>
+            {scheduledAt ? (
+              <p className="text-xs text-green-500">
+                El quiz se abrirá automáticamente a esa hora.
+              </p>
+            ) : (
+              <p className="text-xs text-amber-400">
+                Sin hora definida.
+              </p>
             )}
           </div>
         )}

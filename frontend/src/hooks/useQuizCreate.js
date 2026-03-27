@@ -101,7 +101,7 @@ export function useQuizCreate(quizId = null) {
 
   const saveQuiz = async () => {
     if (!validate()) return;
-
+    if (!user?.id) { alert("Debes iniciar sesión para guardar."); return; }
     if (!window.confirm(isEditing ? "¿Guardar cambios?" : "¿Deseas guardar este quiz?")) return;
 
     setSaving(true);
@@ -127,7 +127,7 @@ export function useQuizCreate(quizId = null) {
         const { id, pin: newPin } = await createQuiz({
           title: title.trim(),
           description: "",
-          creator: 1,
+          creator: user.id,
           image: questions[0]?.image ?? null,
           mode,
           scheduled_at: scheduledAt ?? null,

@@ -12,7 +12,6 @@ const ICONS = ["▲", "◆", "●", "■"];
 
 const MODE_LABELS = {
   normal: { label: "Normal", icon: "🎮", color: "bg-gray-100 text-gray-600" },
-  autonomo: { label: "Autónomo", icon: "⏱", color: "bg-blue-100 text-blue-600" },
   presentacion: { label: "Presentación", icon: "📺", color: "bg-purple-100 text-purple-600" },
 };
 
@@ -38,6 +37,11 @@ export default function HostGameMenu() {
   const countdownRef = useRef(null);
   const qIndexRef = useRef(0);
   const autoStartRef = useRef(null);
+  const hasAutoStarted = useRef(false);
+  // Keep a ref to questions so auto-start closure always sees the latest value
+  const questionsRef = useRef([]);
+  // Pending auto-start: if WS isn't open yet when the time arrives, fire as soon as it opens
+  const pendingAutoStart = useRef(false);
 
   const current = quizQuestions[qIndex];
 
@@ -46,6 +50,7 @@ export default function HostGameMenu() {
       .then((data) => {
         if (data && data.questions && data.questions.length > 0) {
           setQuizQuestions(data.questions);
+          questionsRef.current = data.questions;
           setQuizTitle(data.title);
           setQuizMode(data.mode || "normal");
           setScheduledAt(data.scheduled_at || null);
@@ -60,6 +65,7 @@ export default function HostGameMenu() {
       });
   }, [roomId]);
 
+  // Countdown ticker for normal mode with scheduled time
   useEffect(() => {
     if (!scheduledAt || quizMode !== "normal") return;
     const tick = () => {
@@ -71,23 +77,47 @@ export default function HostGameMenu() {
     return () => clearInterval(id);
   }, [scheduledAt, quizMode]);
 
+  // Auto-start scheduler — uses refs so it never has stale closure issues
   useEffect(() => {
     if (!scheduledAt || quizMode !== "normal" || phase !== "lobby") return;
-    if (players.length === 0) return;
+    if (hasAutoStarted.current) return;
+
     const delay = new Date(scheduledAt).getTime() - Date.now();
-    if (delay <= 0) return;
-    autoStartRef.current = setTimeout(() => { startQuiz(); }, delay);
+
+    const trigger = () => {
+      if (hasAutoStarted.current) return;
+      hasAutoStarted.current = true;
+      // If WS is already open, start immediately; otherwise mark pending
+      if (ws.current?.readyState === WebSocket.OPEN) {
+        startQuizWithQuestions(questionsRef.current);
+      } else {
+        pendingAutoStart.current = true;
+      }
+    };
+
+    if (delay <= 0) {
+      trigger();
+      return;
+    }
+
+    autoStartRef.current = setTimeout(trigger, delay);
     return () => clearTimeout(autoStartRef.current);
-  }, [scheduledAt, quizMode, phase, players.length]);
+  }, [scheduledAt, quizMode, phase]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
       ws.current = new WebSocket(`${WS_URL}/ws/${roomId}/host`);
-      ws.current.onopen = () => console.log("✅ Host conectado al WS");
+      ws.current.onopen = () => {
+        console.log("✅ Host conectado al WS");
+        // Fire pending auto-start if the timer already fired before WS was ready
+        if (pendingAutoStart.current) {
+          pendingAutoStart.current = false;
+          startQuizWithQuestions(questionsRef.current);
+        }
+      };
       ws.current.onerror = (e) => console.error("❌ WS error:", e);
       ws.current.onmessage = (e) => {
         const data = JSON.parse(e.data);
-        console.log("📨 WS event recibido:", data.event, data);
         if (data.event === "playerJoined")
           setPlayers((prev) => prev.includes(data.playerId) ? prev : [...prev, data.playerId]);
         if (data.event === "answerSubmitted")
@@ -129,7 +159,7 @@ export default function HostGameMenu() {
   };
 
   const launchQuestion = (index, questions) => {
-    const list = questions || quizQuestions;
+    const list = questions || questionsRef.current;
     const q = list[index];
     if (!q) return;
     qIndexRef.current = index;
@@ -148,17 +178,22 @@ export default function HostGameMenu() {
         answerType: q.answerType,
       },
     });
-    if (quizMode === "autonomo") {
-      startCountdown(q.time || 20, () => send({ event: "updateScore" }));
-    } else {
-      startCountdown(q.time || 20);
-    }
+    startCountdown(q.time || 20);
   };
 
+  // Used by manual button — reads from state (fine, user clicked so state is settled)
   const startQuiz = () => {
     clearTimeout(autoStartRef.current);
+    hasAutoStarted.current = true;
     send({ event: "startQuiz" });
-    launchQuestion(0, quizQuestions);
+    launchQuestion(0, questionsRef.current);
+  };
+
+  // Used by auto-start — always receives questions explicitly to avoid stale closures
+  const startQuizWithQuestions = (questions) => {
+    clearTimeout(autoStartRef.current);
+    send({ event: "startQuiz" });
+    launchQuestion(0, questions);
   };
 
   const broadcastScores = () => send({ event: "updateScore" });
@@ -171,13 +206,6 @@ export default function HostGameMenu() {
     }
     launchQuestion(next, quizQuestions);
   };
-
-  useEffect(() => {
-    if (quizMode === "autonomo" && phase === "scores") {
-      const timer = setTimeout(() => { nextQuestion(); }, 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [phase, quizMode]);
 
   const formatTime = (ms) => {
     if (ms === null || ms === undefined) return "";
@@ -209,7 +237,7 @@ export default function HostGameMenu() {
 
   const modeInfo = MODE_LABELS[quizMode] || MODE_LABELS.normal;
   const hasScheduled = !!scheduledAt;
-  const scheduledInFuture = hasScheduled && timeUntilStart > 0;
+  const scheduledInFuture = hasScheduled && timeUntilStart !== null && timeUntilStart > 0;
 
   if (phase === "lobby") return (
     <div className="bg-[#F8FBF3] min-h-screen flex flex-col">
@@ -261,51 +289,32 @@ export default function HostGameMenu() {
 
             <div className="h-px bg-gray-100 mx-8" />
 
+            {/* Normal mode: auto-starts at scheduled time, host can also start manually */}
             {quizMode === "normal" && (
               <div className="px-8 py-6 flex flex-col gap-3">
-                {hasScheduled && (
+                {hasScheduled ? (
                   <div className={`w-full rounded-2xl px-5 py-4 text-center border ${scheduledInFuture ? "bg-amber-50 border-amber-100" : "bg-green-50 border-green-100"}`}>
                     {scheduledInFuture ? (
                       <>
-                        <p className="text-amber-700 font-bold text-sm">⏰ Inicio programado</p>
-                        <p className="text-amber-500 text-xs mt-1">El quiz arrancará automáticamente cuando llegue la hora.</p>
+                        <p className="text-amber-700 font-bold text-sm">⏰ Inicio automático programado</p>
                         <p className="text-amber-400 text-2xl font-black font-mono mt-2">{formatTime(timeUntilStart)}</p>
                         <p className="text-amber-300 text-xs mt-1">{new Date(scheduledAt).toLocaleString()}</p>
                       </>
                     ) : (
-                      <>
-                        <p className="text-green-700 font-bold text-sm">✅ ¡Ya es la hora!</p>
-                        <p className="text-green-500 text-xs mt-1">Inicia el quiz cuando quieras.</p>
-                      </>
+                      <p className="text-green-700 font-bold text-sm">✅ Iniciando...</p>
                     )}
                   </div>
-                )}
+                ) : null}
                 <button
                   onClick={startQuiz}
-                  disabled={players.length === 0}
-                  className="w-full bg-[#1a1a1a] hover:bg-[#333] disabled:opacity-30 disabled:cursor-not-allowed text-white font-bold text-base py-4 rounded-2xl transition-all active:scale-95"
+                  className="w-full bg-[#1a1a1a] hover:bg-[#333] text-white font-bold text-base py-4 rounded-2xl transition-all active:scale-95"
                 >
-                  {players.length === 0 ? "Esperando jugadores para iniciar" : "Iniciar Quiz →"}
+                  Iniciar ahora →
                 </button>
               </div>
             )}
 
-            {quizMode === "autonomo" && (
-              <div className="px-8 py-6">
-                <div className="w-full bg-blue-50 border border-blue-100 rounded-2xl px-6 py-5 text-center">
-                  <p className="text-blue-700 font-bold text-base">⏱ Modo Autónomo</p>
-                  <p className="text-blue-500 text-sm mt-1">El quiz avanza solo — sin intervención del host.</p>
-                </div>
-                <button
-                  onClick={startQuiz}
-                  disabled={players.length === 0}
-                  className="w-full mt-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-30 disabled:cursor-not-allowed text-white font-bold text-base py-4 rounded-2xl transition-all active:scale-95"
-                >
-                  {players.length === 0 ? "Esperando jugadores" : "Iniciar ahora →"}
-                </button>
-              </div>
-            )}
-
+            {/* Presentacion mode: host controls everything manually */}
             {quizMode === "presentacion" && (
               <div className="px-8 py-6">
                 <button
@@ -383,17 +392,12 @@ export default function HostGameMenu() {
               ))}
             </div>
 
-            {quizMode !== "autonomo" && (
-              <div className="flex gap-4">
-                <Button variant="secondary" onClick={() => setShowingScores(true)}>Ver scores</Button>
-                <Button variant="save" onClick={() => { broadcastScores(); }}>
-                  {qIndex + 1 >= quizQuestions.length ? "Finalizar" : "Siguiente →"}
-                </Button>
-              </div>
-            )}
-            {quizMode === "autonomo" && (
-              <p className="text-white/30 text-sm">El quiz avanza automáticamente al terminar el tiempo</p>
-            )}
+            <div className="flex gap-4">
+              <Button variant="secondary" onClick={() => setShowingScores(true)}>Ver scores</Button>
+              <Button variant="save" onClick={() => { broadcastScores(); }}>
+                {qIndex + 1 >= quizQuestions.length ? "Finalizar" : "Siguiente →"}
+              </Button>
+            </div>
           </>
         )}
       </div>
@@ -404,13 +408,9 @@ export default function HostGameMenu() {
     <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center gap-6 px-4">
       <h2 className="text-white text-4xl font-black">Ranking</h2>
       <ScoreBoard scores={scores} />
-      {quizMode === "autonomo" ? (
-        <p className="text-white/40 text-sm animate-pulse">Siguiente pregunta en unos segundos...</p>
-      ) : (
-        <Button variant="save" size="lg" onClick={nextQuestion}>
-          {qIndex + 1 >= quizQuestions.length ? "Finalizar quiz" : "Siguiente pregunta →"}
-        </Button>
-      )}
+      <Button variant="save" size="lg" onClick={nextQuestion}>
+        {qIndex + 1 >= quizQuestions.length ? "Finalizar quiz" : "Siguiente pregunta →"}
+      </Button>
     </div>
   );
 

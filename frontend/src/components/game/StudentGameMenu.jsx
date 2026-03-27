@@ -39,6 +39,7 @@ export default function StudentGameMenu({ mode }) {
 
   const ws = useRef(null);
   const audioRef = useRef(null);
+  const autoStartedRef = useRef(false);
 
   const [phase, setPhase] = useState("waiting");
   const [players, setPlayers] = useState([]);
@@ -55,13 +56,29 @@ export default function StudentGameMenu({ mode }) {
       onAnswered: () => setPhase("showAnswer"),
     });
 
+  // Load scheduled time for "normal" mode
   useEffect(() => {
-    if (mode === "normal" || mode === "autonomo") {
-      getQuizFullByPin(roomId)
-        .then((data) => data?.scheduled_at && setScheduledAt(data.scheduled_at))
-        .catch(() => {});
-    }
+    if (mode !== "normal") return;
+    getQuizFullByPin(roomId)
+      .then((data) => {
+        if (data?.scheduled_at) setScheduledAt(data.scheduled_at);
+      })
+      .catch(() => {});
   }, [mode, roomId]);
+
+  // Auto-start when countdown hits 0 in "normal" mode
+  useEffect(() => {
+    if (mode !== "normal") return;
+    if (!scheduledAt) return;
+    if (autoStartedRef.current) return;
+    if (timeLeft === null || timeLeft > 0) return;
+
+    autoStartedRef.current = true;
+    setPhase("starting");
+    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+      ws.current.send(JSON.stringify({ event: "autoStart" }));
+    }
+  }, [timeLeft, mode, scheduledAt]);
 
   useEffect(() => {
     const audio = new Audio(quizsong);
@@ -121,20 +138,30 @@ export default function StudentGameMenu({ mode }) {
   }, [roomId, playerId]);
 
   if (phase === "waiting") {
-    const notYet = scheduledAt && timeLeft > 0;
+    const isNormal = mode === "normal";
+    const notYet = isNormal && scheduledAt && timeLeft !== null && timeLeft > 0;
+
     return (
       <div className="min-h-screen bg-[#F8FBF3] flex flex-col items-center justify-center gap-6 px-4">
         <h2 className="text-[#292726] text-3xl font-black">¡Listo, {playerId}!</h2>
+
         {notYet ? (
           <>
-            <p className="text-[#292726]/60">Empieza en:</p>
+            <p className="text-[#292726]/60">El quiz se abre en:</p>
             <div className="bg-[#1a1a2e] text-white text-5xl font-black px-10 py-6 rounded-3xl">
               {formatCountdown(timeLeft)}
             </div>
+            <p className="text-[#292726]/40 text-sm text-center max-w-xs">
+              Comenzará automáticamente cuando llegue la hora.
+            </p>
           </>
         ) : (
           <>
-            <p className="text-[#292726]/60">Esperando que el host inicie...</p>
+            <p className="text-[#292726]/60">
+              {isNormal
+                ? "Esperando hora de inicio..."
+                : "Esperando que el host inicie..."}
+            </p>
             <div className="flex gap-1.5">
               {[0, 1, 2].map((i) => (
                 <div key={i} className="w-2 h-2 bg-[#e21b3c] rounded-full animate-bounce"
@@ -143,6 +170,7 @@ export default function StudentGameMenu({ mode }) {
             </div>
           </>
         )}
+
         {players.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-2">
             {players.map((p, i) => (
