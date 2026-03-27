@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles } from "lucide-react";
-import Button from "../components/ui/Button";
 import usePDFQuiz from "../hooks/usePDFQuiz";
+import CardNavbar from "../components/layout/Cardnavbar";
 
 export default function QuizPDF() {
   const navigate = useNavigate();
@@ -37,21 +37,7 @@ export default function QuizPDF() {
 
   return (
     <div className="bg-[#F8FBF3] min-h-screen flex flex-col">
-      <nav className="bg-[#fde8e0] px-6 h-16 flex items-center justify-between z-50 gap-4">
-        <div
-          className="flex items-center gap-2 cursor-pointer"
-          onClick={() => navigate("/")}
-        >
-          <div className="w-8 h-8 bg-[#f43f5e] rounded-full flex items-center justify-center">
-            <Sparkles size={16} color="white" />
-          </div>
-          <span className="font-black text-[#1a1a1a] text-lg">Quiz PDF</span>
-        </div>
-        <Button variant="save" onClick={() => navigate("/")}>
-          Cancelar
-        </Button>
-      </nav>
-
+      <CardNavbar title="Quiz PDF" />
       <div className="flex-1 flex items-center justify-center px-6 py-10">
         <div className="w-full max-w-xl flex flex-col gap-6">
 
@@ -68,7 +54,6 @@ export default function QuizPDF() {
           </div>
 
           <div className="bg-white rounded-3xl shadow-[0_8px_40px_rgba(0,0,0,0.08)] border border-gray-100 p-6 flex flex-col gap-4">
-
             <div
               onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
               onDragLeave={(e) => { e.preventDefault(); setDragging(false); }}

@@ -4,8 +4,6 @@ const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_API_KEY = import.meta.env.VITE_QHIT_KEY;
 const UNSPLASH_KEY = import.meta.env.VITE_UNSPLASH_KEY;
 const MODEL = "llama-3.1-8b-instant";
-console.log(import.meta.env.VITE_QHIT_KEY);
-console.log("KEY:", import.meta.env.VITE_QHIT_KEY);
 
 export const fetchImage = async (query) => {
   try {

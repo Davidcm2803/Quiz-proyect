@@ -8,7 +8,6 @@ import {
   linkWithPopup,
   sendPasswordResetEmail,
 } from "firebase/auth";
-console.log(import.meta.env.VITE_FIREBASE_API_KEY);
 
 export const resetPassword = async (email) => {
   await sendPasswordResetEmail(auth, email);

@@ -12,6 +12,7 @@ import QuizAIGenerator from "./pages/QuizAIGenerator";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 import AdminDashboard from "./pages/AdminDashboard";
 import QuizPDF from "./pages/QuizPDF";
+import Learn from "./pages/Learn";
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="/present/:roomId/:playerId" element={<Present />} />
         <Route path="/host/:roomId" element={<HostGame />} />
         <Route path="/present" element={<Presentgame />} />
+        <Route path="/learn" element={<Learn />} />
         <Route
           path="/quiz/create"
           element={

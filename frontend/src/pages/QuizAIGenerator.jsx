@@ -8,7 +8,7 @@ import QuestionSidebar from "../components/quiz/Questionsidebar";
 import QuizSidebar from "../components/quiz/Quizsidebar";
 import { useQuizCreate } from "../hooks/useQuizCreate";
 import { useQuizAI } from "../hooks/useQuizAI";
-import Button from "../components/ui/Button";
+import CardNavbar from "../components/layout/Cardnavbar";
 
 export default function QuizAIGenerator() {
   const navigate = useNavigate();
@@ -68,20 +68,7 @@ export default function QuizAIGenerator() {
 
   return (
     <div className="bg-[#F8FBF3] min-h-screen flex flex-col">
-      <nav className="bg-[#fde8e0] px-6 h-16 flex items-center justify-between z-50 gap-4">
-        <div
-          className="flex items-center gap-2 cursor-pointer"
-          onClick={() => navigate("/")}
-        >
-          <div className="w-8 h-8 bg-[#16a34a] rounded-full flex items-center justify-center">
-            <Sparkles size={16} color="white" />
-          </div>
-          <span className="font-black text-[#1a1a1a] text-lg">Quiz IA</span>
-        </div>
-        <Button variant="save" onClick={() => navigate("/")}>
-          Cancelar
-        </Button>
-      </nav>
+      <CardNavbar title="Quiz IA" />
       <div className="flex-1 flex items-center justify-center px-6 py-10">
         <div className="w-full max-w-xl flex flex-col gap-6">
           <div className="text-center">
