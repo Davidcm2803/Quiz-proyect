@@ -37,7 +37,7 @@ const TOOLS = [
     icon: <FileText size={22} strokeWidth={2} color="white" />,
     title: "Generate a kahoot from your PDF file in one click",
     buttonLabel: "Create",
-    path: null,
+    path: "/quiz/pdf", 
   },
   {
     id: 4,
@@ -100,20 +100,20 @@ function ToolCard({ bgColor, icon, title, buttonLabel, path }) {
 const GAP = 20;
 
 function getVisible(width) {
-  if (width < 640)  return 1;
+  if (width < 640) return 1;
   if (width < 1024) return 2;
   return 3;
 }
 
 export default function Carousel() {
-  const [current, setCurrent]               = useState(0);
-  const [isHovered, setIsHovered]           = useState(false);
+  const [current, setCurrent] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
 
   const containerRef = useRef(null);
-  const total        = TOOLS.length;
-  const visible      = getVisible(containerWidth);
-  const maxIndex     = Math.max(0, total - visible);
+  const total = TOOLS.length;
+  const visible = getVisible(containerWidth);
+  const maxIndex = Math.max(0, total - visible);
 
   useEffect(() => {
     const observer = new ResizeObserver((entries) => {
@@ -127,8 +127,15 @@ export default function Carousel() {
     setCurrent((c) => Math.min(c, maxIndex));
   }, [maxIndex]);
 
-  const next = useCallback(() => setCurrent((c) => (c >= maxIndex ? 0 : c + 1)), [maxIndex]);
-  const prev = useCallback(() => setCurrent((c) => (c <= 0 ? maxIndex : c - 1)), [maxIndex]);
+  const next = useCallback(
+    () => setCurrent((c) => (c >= maxIndex ? 0 : c + 1)),
+    [maxIndex]
+  );
+
+  const prev = useCallback(
+    () => setCurrent((c) => (c <= 0 ? maxIndex : c - 1)),
+    [maxIndex]
+  );
 
   useEffect(() => {
     if (isHovered) return;
@@ -136,9 +143,10 @@ export default function Carousel() {
     return () => clearInterval(id);
   }, [isHovered, next]);
 
-  const cardWidth = containerWidth > 0
-    ? (containerWidth - GAP * (visible - 1)) / visible
-    : 0;
+  const cardWidth =
+    containerWidth > 0
+      ? (containerWidth - GAP * (visible - 1)) / visible
+      : 0;
 
   const offset = current * (cardWidth + GAP);
 

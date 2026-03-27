@@ -4,8 +4,10 @@ const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_API_KEY = import.meta.env.VITE_QHIT_KEY;
 const UNSPLASH_KEY = import.meta.env.VITE_UNSPLASH_KEY;
 const MODEL = "llama-3.1-8b-instant";
+console.log(import.meta.env.VITE_QHIT_KEY);
+console.log("KEY:", import.meta.env.VITE_QHIT_KEY);
 
-const fetchImage = async (query) => {
+export const fetchImage = async (query) => {
   try {
     const res = await fetch(
       `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape`,

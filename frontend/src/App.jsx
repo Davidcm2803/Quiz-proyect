@@ -9,11 +9,13 @@ import HostGame from "./pages/HostGame";
 import QuizAIGenerator from "./pages/QuizAIGenerator";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 import AdminDashboard from "./pages/AdminDashboard";
+import QuizPDF from "./pages/QuizPDF";
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/quiz/pdf"  element={<ProtectedRoute><QuizPDF /></ProtectedRoute>}/>
         <Route path="/" element={<Home />} />
         <Route path="/join" element={<Join />} />
         <Route path="/register" element={<Register />} />
