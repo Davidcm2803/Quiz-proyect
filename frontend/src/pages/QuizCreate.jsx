@@ -1,4 +1,5 @@
 import { useParams } from "react-router-dom";
+import { useEffect } from "react";
 import QuizNavbar from "../components/quiz/Quiznavbar";
 import QuizEditor from "../components/quiz/QuizEditor";
 import QuizMobileBar from "../components/quiz/QuizMobileBar";
@@ -9,6 +10,16 @@ import { useQuizCreate } from "../hooks/useQuizCreate";
 export default function QuizCreate() {
   const { quizId } = useParams();
   const quiz = useQuizCreate(quizId);
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem("pdfQuiz");
+    if (!saved) return;
+    const data = JSON.parse(saved);
+    quiz.setTitle(data.title);
+    quiz.setQuestions(data.questions);
+    quiz.setActiveIndex(0);
+    sessionStorage.removeItem("pdfQuiz");
+  }, []);
 
   if (quiz.loading) return (
     <div className="h-screen flex items-center justify-center bg-[#f5f5f5]">

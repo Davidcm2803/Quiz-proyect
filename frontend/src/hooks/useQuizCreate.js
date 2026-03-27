@@ -14,7 +14,7 @@ const emptyQuestion = () => ({
   question: "",
   image: null,
   answers: ["", "", "", ""],
-  correct: null,
+  correct: 0,
   timeLimit: 20,
   answerType: "single",
 });
@@ -62,7 +62,7 @@ export function useQuizCreate(quizId = null) {
       .finally(() => setLoading(false));
   }, [quizId]);
 
-  const active = questions[activeIndex] ?? null;
+  const active = questions[activeIndex] || emptyQuestion();
 
   const updateActive = (field, value) =>
     setQuestions((prev) =>
@@ -101,6 +101,7 @@ export function useQuizCreate(quizId = null) {
 
   const saveQuiz = async () => {
     if (!validate()) return;
+
     if (!window.confirm(isEditing ? "¿Guardar cambios?" : "¿Deseas guardar este quiz?")) return;
 
     setSaving(true);
@@ -126,7 +127,7 @@ export function useQuizCreate(quizId = null) {
         const { id, pin: newPin } = await createQuiz({
           title: title.trim(),
           description: "",
-          creator: user.id,
+          creator: 1,
           image: questions[0]?.image ?? null,
           mode,
           scheduled_at: scheduledAt ?? null,
@@ -146,6 +147,7 @@ export function useQuizCreate(quizId = null) {
           answerType: q.answerType,
         });
         questionIds.push(questionId);
+
         for (let i = 0; i < q.answers.length; i++) {
           await createAnswer({
             questionId,
