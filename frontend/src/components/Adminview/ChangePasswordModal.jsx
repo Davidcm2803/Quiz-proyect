@@ -115,7 +115,6 @@ export default function ChangePasswordModal({ onClose }) {
       <ModalHeader Icon={Lock} title="Cambiar contraseña" onClose={onClose} />
 
       <div className="px-5 py-4 space-y-4">
-        {/* Actual */}
         <div>
           <label className="block text-xs font-semibold text-gray-600 mb-1.5">Contraseña actual</label>
           <PwInput
@@ -126,8 +125,6 @@ export default function ChangePasswordModal({ onClose }) {
             autoComplete="current-password"
           />
         </div>
-
-        {/* Nueva */}
         <div>
           <label className="block text-xs font-semibold text-gray-600 mb-1.5">Nueva contraseña</label>
           <PwInput
@@ -139,8 +136,6 @@ export default function ChangePasswordModal({ onClose }) {
           />
           <StrengthBar password={next} />
         </div>
-
-        {/* Confirmar */}
         <div>
           <label className="block text-xs font-semibold text-gray-600 mb-1.5">Confirmar contraseña</label>
           <PwInput
@@ -158,8 +153,6 @@ export default function ChangePasswordModal({ onClose }) {
             {error}
           </div>
         )}
-
-        {/* Aviso */}
         <div className="flex items-start gap-2 bg-[#fde8e0] rounded-xl px-4 py-2.5">
           <ShieldCheck size={13} className="text-[#e21b3c] flex-shrink-0 mt-0.5" />
           <p className="text-xs text-[#e21b3c]">

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles } from "lucide-react";
+import { FileText } from "lucide-react";
 import usePDFQuiz from "../hooks/usePDFQuiz";
 import CardNavbar from "../components/layout/Cardnavbar";
 
@@ -43,7 +43,7 @@ export default function QuizPDF() {
 
           <div className="text-center">
             <div className="w-14 h-14 bg-[#f43f5e] rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Sparkles size={28} color="white" />
+              <FileText size={28} color="white" />
             </div>
             <h1 className="text-3xl font-black text-[#1a1a1a]">
               Crear quiz desde PDF
@@ -112,7 +112,7 @@ export default function QuizPDF() {
                 </>
               ) : (
                 <>
-                  <Sparkles size={18} />
+                  <FileText size={18} />
                   Generar quiz
                 </>
               )}

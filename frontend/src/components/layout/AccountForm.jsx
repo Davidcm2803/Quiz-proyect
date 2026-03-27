@@ -7,9 +7,24 @@ import ChangePasswordModal from "./ChangePasswordModal";
 import DeleteAccountModal from "./DeleteAccountModal";
 
 const SECTIONS = [
-  { id: "username", label: "Nombre de usuario", Icon: User, description: "Cambia cómo te ven los demás" },
-  { id: "password", label: "Contraseña", Icon: Lock, description: "Actualiza tu contraseña de acceso" },
-  { id: "security", label: "Seguridad", Icon: ShieldCheck, description: "Información de tu cuenta" },
+  {
+    id: "username",
+    label: "Nombre de usuario",
+    Icon: User,
+    description: "Cambia cómo te ven los demás",
+  },
+  {
+    id: "password",
+    label: "Contraseña",
+    Icon: Lock,
+    description: "Actualiza tu contraseña de acceso",
+  },
+  {
+    id: "security",
+    label: "Seguridad",
+    Icon: ShieldCheck,
+    description: "Información de tu cuenta",
+  },
 ];
 
 export default function AccountForm() {
@@ -19,10 +34,11 @@ export default function AccountForm() {
   return (
     <main className="min-h-[calc(100vh-4rem)] bg-transparent px-4 py-10">
       <div className="max-w-xl mx-auto space-y-5">
-
         <div className="text-center">
           <h1 className="text-xl font-bold text-gray-900">Mi cuenta</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Gestiona tu información y seguridad</p>
+          <p className="text-sm text-gray-400 mt-0.5">
+            Gestiona tu información y seguridad
+          </p>
         </div>
 
         <AccountCard user={user} />
@@ -44,7 +60,10 @@ export default function AccountForm() {
                   <p className="text-xs text-gray-400">{description}</p>
                 </div>
                 {id !== "security" && (
-                  <ChevronRight size={15} className="text-gray-300 flex-shrink-0" />
+                  <ChevronRight
+                    size={15}
+                    className="text-gray-300 flex-shrink-0"
+                  />
                 )}
               </button>
 
@@ -58,11 +77,15 @@ export default function AccountForm() {
         </div>
 
         <div className="bg-white rounded-2xl border border-red-100 shadow-sm px-5 py-4">
-          <p className="text-xs font-semibold text-red-500 mb-1">Zona de peligro</p>
-          <p className="text-xs text-gray-400 mb-3">Esta acción es permanente e irreversible.</p>
+          <p className="text-xs font-semibold text-red-500 mb-1">
+            Zona de peligro
+          </p>
+          <p className="text-xs text-gray-400 mb-3">
+            Esta acción es permanente e irreversible.
+          </p>
           <button
             onClick={() => setModal("delete")}
-            className="flex items-center gap-2 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-xl transition-colors"
+            className="flex items-center gap-2 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-xl transition-colors mx-auto"
           >
             <Trash2 size={13} />
             Eliminar mi cuenta
@@ -70,9 +93,15 @@ export default function AccountForm() {
         </div>
       </div>
 
-      {modal === "username" && <ChangeUsernameModal onClose={() => setModal(null)} />}
-      {modal === "password" && <ChangePasswordModal onClose={() => setModal(null)} />}
-      {modal === "delete" && <DeleteAccountModal onClose={() => setModal(null)} />}
+      {modal === "username" && (
+        <ChangeUsernameModal onClose={() => setModal(null)} />
+      )}
+      {modal === "password" && (
+        <ChangePasswordModal onClose={() => setModal(null)} />
+      )}
+      {modal === "delete" && (
+        <DeleteAccountModal onClose={() => setModal(null)} />
+      )}
     </main>
   );
 }

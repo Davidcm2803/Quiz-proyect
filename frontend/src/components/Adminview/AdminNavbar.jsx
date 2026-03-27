@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ChevronDown, User, LogOut, Plus, Sparkles, Menu, X,
+  ChevronDown, User, LogOut, Plus, Sparkles, Menu, X, FileText,
 } from "lucide-react";
 import logo from "../../assets/logo.png";
 import { useAuth } from "../../context/AuthContext";
@@ -12,6 +12,7 @@ const FOOTER_LINKS = ["¿Qué hay de nuevo?", "Ponte en contacto", "Documentacio
 const CREATE_ITEMS = [
   { id: 1, bgColor: "#ef4444", Icon: Plus,     label: "Crear desde cero", path: "/quiz/create" },
   { id: 2, bgColor: "#16a34a", Icon: Sparkles, label: "Crear con IA",     path: "/quiz/ai" },
+  { id: 2, bgColor: "#db2777", Icon: FileText, label: "Crear con PDF",     path: "/quiz/pdf" },
 ];
 
 function CreateDropdown() {
