@@ -7,7 +7,6 @@ export default function QuizPDF() {
   const navigate = useNavigate();
 
   const [file, setFile] = useState(null);
-  const [imageSource, setImageSource] = useState("unsplash");
   const [dragging, setDragging] = useState(false);
 
   const [title, setTitle] = useState("");
@@ -31,7 +30,7 @@ export default function QuizPDF() {
   function handleGenerate() {
     if (!file) return;
 
-    importFromPDF(file, imageSource).then((res) => {
+    importFromPDF(file).then((res) => {
       if (!res) return;
       sessionStorage.setItem("pdfQuiz", JSON.stringify(res));
       navigate("/quiz/create");
@@ -94,26 +93,6 @@ export default function QuizPDF() {
                 Archivo cargado: {file.name}
               </p>
             )}
-
-            <div className="flex gap-4 justify-center text-sm text-gray-600">
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  checked={imageSource === "unsplash"}
-                  onChange={() => setImageSource("unsplash")}
-                />
-                Unsplash
-              </label>
-
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  checked={imageSource === "local"}
-                  onChange={() => setImageSource("local")}
-                />
-                Local
-              </label>
-            </div>
 
             {error && (
               <p className="text-red-400 text-sm text-center">{error}</p>
