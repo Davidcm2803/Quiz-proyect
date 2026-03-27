@@ -20,6 +20,16 @@ def create_question(question: QuestionCreate):
     })
     return {"id": str(result.inserted_id)}
 
+@router.delete("/by-quiz/{quiz_id}")
+def delete_questions_by_quiz(quiz_id: str):
+    from app.db import answers
+    oid = ObjectId(quiz_id)
+    question_list = list(questions.find({"quiz": oid}))
+    question_ids = [q["_id"] for q in question_list]
+    if question_ids:
+        answers.delete_many({"question": {"$in": question_ids}})
+    questions.delete_many({"quiz": oid})
+    return {"ok": True}
 
 @router.get("/{question_id}")
 def get_question(question_id: str):

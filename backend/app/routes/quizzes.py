@@ -19,6 +19,8 @@ def create_quiz(quiz: QuizCreate):
         "questions": [],
         "started": False,
         "pin": pin,
+        "mode": quiz.mode or "normal",
+        "scheduled_at": quiz.scheduled_at,
         "createdAt": datetime.utcnow(),
     })
     return {"id": str(result.inserted_id), "pin": pin}
@@ -26,10 +28,18 @@ def create_quiz(quiz: QuizCreate):
 
 @router.patch("/{quiz_id}")
 def update_quiz_questions(quiz_id: str, payload: dict):
-    question_ids = [ObjectId(qid) for qid in payload.get("questions", [])]
+    update_fields = {}
+
+    if "questions" in payload:
+        update_fields["questions"] = [ObjectId(qid) for qid in payload["questions"]]
+    if "mode" in payload:
+        update_fields["mode"] = payload["mode"]
+    if "scheduled_at" in payload:
+        update_fields["scheduled_at"] = datetime.fromisoformat(payload["scheduled_at"]) if payload["scheduled_at"] else None
+
     quizzes.update_one(
         {"_id": ObjectId(quiz_id)},
-        {"$set": {"questions": question_ids}}
+        {"$set": update_fields}
     )
     return {"ok": True}
 

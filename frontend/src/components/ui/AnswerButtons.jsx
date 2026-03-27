@@ -25,7 +25,7 @@ export default function AnswerButtons({ answers, selected, onSelect, answerType 
             className={`
               ${COLORS[i].bg} ${!isSelected(i) ? COLORS[i].hover : ""}
               text-white font-bold
-              py-4 sm:py-6 lg:py-8
+              py-18 sm:py-9 lg:py-11
               rounded-xl sm:rounded-2xl
               transition-all active:scale-95
               ${isDisabled(i) ? "opacity-40" : ""}

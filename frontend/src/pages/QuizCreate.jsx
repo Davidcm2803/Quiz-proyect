@@ -7,7 +7,7 @@ import QuizSidebar from "../components/quiz/Quizsidebar";
 import { useQuizCreate } from "../hooks/useQuizCreate";
 
 export default function QuizCreate() {
-  const { quizId } = useParams(); 
+  const { quizId } = useParams();
   const quiz = useQuizCreate(quizId);
 
   if (quiz.loading) return (
@@ -37,12 +37,16 @@ export default function QuizCreate() {
           />
         </div>
         <QuizEditor question={quiz.active} onUpdate={quiz.updateActive} />
-        <div className="hidden md:flex">
+        <div className="hidden md:flex flex-col overflow-y-auto">
           <QuizSidebar
             timeLimit={quiz.active.timeLimit}
             onTimeChange={(val) => quiz.updateActive("timeLimit", val)}
             answerType={quiz.active.answerType}
             onAnswerTypeChange={(val) => quiz.updateActive("answerType", val)}
+            mode={quiz.mode}
+            onModeChange={quiz.setMode}
+            scheduledAt={quiz.scheduledAt}
+            onScheduledAtChange={quiz.setScheduledAt}
           />
         </div>
       </div>
