@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { MoreVertical, Pencil, Trash2, Play } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, Play, Monitor } from "lucide-react";
 
 export default function QuizCard({ quiz, onDelete }) {
   const navigate = useNavigate();
@@ -39,6 +39,8 @@ export default function QuizCard({ quiz, onDelete }) {
     navigate(`/host/${quiz.pin}`);
   };
 
+  const isPresentation = quiz.mode === "presentacion";
+
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-all group cursor-pointer">
       <div className="relative aspect-video bg-gray-200 overflow-hidden">
@@ -57,6 +59,16 @@ export default function QuizCard({ quiz, onDelete }) {
         )}
         <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
           {questionCount} {questionCount === 1 ? "pregunta" : "preguntas"}
+        </div>
+        <div
+          className={`absolute top-2 left-2 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+            isPresentation
+              ? "bg-blue-500/90 text-white"
+              : "bg-[#16a34a]/90 text-white"
+          }`}
+        >
+          {isPresentation ? <Monitor size={9} /> : <Play size={9} fill="white" strokeWidth={0} />}
+          {isPresentation ? "Presentación" : "Normal"}
         </div>
       </div>
       <div className="px-3 py-2.5 flex items-center justify-between gap-2">

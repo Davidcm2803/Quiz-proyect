@@ -29,5 +29,5 @@ export default function StudentGame() {
     </div>
   );
 
-  return <StudentGameMenu mode={mode} />;
+  return <StudentGameMenu />; 
 }

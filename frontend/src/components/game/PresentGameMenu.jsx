@@ -16,6 +16,7 @@ export default function PresentGameMenu() {
 
   const ws = useRef(null);
   const audioRef = useRef(null);
+  const questionVisibleAtRef = useRef(null);
 
   const [phase, setPhase] = useState("waiting");
   const [question, setQuestion] = useState(null);
@@ -25,6 +26,10 @@ export default function PresentGameMenu() {
     useGameAnswer({
       question,
       ws,
+      getTimeUsed: () =>
+        questionVisibleAtRef.current
+          ? (Date.now() - questionVisibleAtRef.current) / 1000
+          : null,
       onAnswered: () => setPhase("showAnswer"),
     });
 
@@ -47,6 +52,12 @@ export default function PresentGameMenu() {
   }, [phase]);
 
   useEffect(() => {
+    if (phase !== "showAnswer") return;
+    const t = setTimeout(() => setPhase("answered"), 1500);
+    return () => clearTimeout(t);
+  }, [phase]);
+
+  useEffect(() => {
     ws.current = new WebSocket(`${WS_URL}/ws/${roomId}/${playerId}`);
 
     ws.current.onopen = () => {
@@ -64,6 +75,7 @@ export default function PresentGameMenu() {
         resetAnswer(isMultiple);
         setPhase("question");
         startCountdown(data.question?.time || 20);
+        questionVisibleAtRef.current = Date.now();
       }
 
       if (data.event === "scoreUpdate") {
@@ -110,19 +122,16 @@ export default function PresentGameMenu() {
           <div className="h-full bg-[#e21b3c] transition-all duration-1000"
             style={{ width: `${(countdown / (question.time || 20)) * 100}%` }} />
         </div>
-
         <div className="flex-1 flex flex-col relative z-10">
           <div className="flex justify-center pt-4 pb-2">
             <div className={`text-5xl sm:text-6xl font-black tabular-nums ${countdown <= 5 ? "text-[#e21b3c] animate-pulse" : "text-white"}`}>
               {countdown}s
             </div>
           </div>
-
           <div className="flex-1 flex flex-col items-center justify-center px-3 sm:px-6 py-4 sm:py-6 gap-4">
             {isMultiple && (
               <p className="text-white/50 text-sm -mb-2">Selecciona todas las correctas</p>
             )}
-
             <div className="w-full max-w-3xl sm:max-w-4xl grid grid-cols-2 gap-4 sm:gap-5">
               {question.answers.map((_, i) => {
                 const isSelected = isMultiple ? selectedArr.includes(i) : selected === i;
@@ -145,8 +154,7 @@ export default function PresentGameMenu() {
                 );
               })}
             </div>
-
-            {isMultiple && (
+            {isMultiple && selectedArr.length > 0 && (
               <button
                 onClick={() => submitAnswer("confirm")}
                 disabled={selectedArr.length === 0}
@@ -161,20 +169,17 @@ export default function PresentGameMenu() {
     );
   }
 
-  if (phase === "showAnswer") {
-    setTimeout(() => setPhase("answered"), 1500);
-    return (
-      <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center gap-5 px-4">
-        <div className="text-8xl">{result?.correct ? "✅" : result?.partial ? "🟡" : "❌"}</div>
-        <h2 className={`text-4xl font-black ${result?.correct ? "text-green-400" : result?.partial ? "text-yellow-400" : "text-[#e21b3c]"}`}>
-          {result?.correct ? "¡Correcto!" : result?.partial ? "¡Parcial!" : "Incorrecto"}
-        </h2>
-        {result?.points > 0 && (
-          <p className="text-white text-2xl font-bold">+{result.points} pts</p>
-        )}
-      </div>
-    );
-  }
+  if (phase === "showAnswer") return (
+    <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center gap-5 px-4">
+      <div className="text-8xl">{result?.correct ? "✅" : result?.partial ? "🟡" : "❌"}</div>
+      <h2 className={`text-4xl font-black ${result?.correct ? "text-green-400" : result?.partial ? "text-yellow-400" : "text-[#e21b3c]"}`}>
+        {result?.correct ? "¡Correcto!" : result?.partial ? "¡Parcial!" : "Incorrecto"}
+      </h2>
+      {result?.points > 0 && (
+        <p className="text-white text-2xl font-bold">+{result.points} pts</p>
+      )}
+    </div>
+  );
 
   if (phase === "answered") return (
     <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center gap-4 px-4">

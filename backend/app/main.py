@@ -8,6 +8,7 @@ from app.routes import (
     sessions,
     rankings,
     users,
+    normal_quiz
 )
 
 app = FastAPI(title="Quiz API")
@@ -30,5 +31,6 @@ app.include_router(quizzes.router)
 app.include_router(questions.router)
 app.include_router(answers.router)
 app.include_router(sessions.router)
-#app.include_router(rankings.router)
+app.include_router(rankings.router)
 app.include_router(users.router)
+app.include_router(normal_quiz.router)

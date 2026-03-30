@@ -81,8 +81,11 @@ def get_quiz_by_pin(pin: int):
     return serialize_mongo(quiz)
 
 @router.get("/by-creator/{creator_id}")
-def get_quizzes_by_creator(creator_id: str):
-    result = quizzes.find({"creator": ObjectId(creator_id)})
+def get_quizzes_by_creator(creator_id: str, mode: str = None):
+    query = {"creator": ObjectId(creator_id)}
+    if mode:
+        query["mode"] = mode
+    result = quizzes.find(query)
     return [serialize_mongo(q) for q in result]
 
 @router.get("/full/{quiz_id}")

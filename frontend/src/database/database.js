@@ -173,8 +173,11 @@ export async function getQuizFullByPin(pin) {
  * @param {string} creatorId
  * @returns {Promise<Quiz[]>}
  */
-export async function getQuizzesByCreator(creatorId) {
-  const res = await fetch(`${API_URL}/quizzes/by-creator/${creatorId}`);
+export async function getQuizzesByCreator(creatorId, mode = null) {
+  const url = mode
+    ? `${API_URL}/quizzes/by-creator/${creatorId}?mode=${mode}`
+    : `${API_URL}/quizzes/by-creator/${creatorId}`;
+  const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch quizzes");
   return res.json();
 }

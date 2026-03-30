@@ -8,7 +8,7 @@ import { useAuth } from "../../context/AuthContext";
 export default function PresentGame() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { quizzes, loading } = useLibrary();
+  const { quizzes, loading } = useLibrary("presentacion");
 
   if (!user) {
     return (
@@ -60,7 +60,7 @@ export default function PresentGame() {
           </div>
         ) : quizzes.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-32 gap-3">
-            <p className="text-gray-400 text-sm">No tienes quizzes aún</p>
+            <p className="text-gray-400 text-sm">No tienes quizzes en modo presentación</p>
             <button
               onClick={() => navigate("/")}
               className="text-[#16a34a] text-sm font-semibold hover:underline"

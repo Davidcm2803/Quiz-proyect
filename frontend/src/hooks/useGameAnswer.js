@@ -1,15 +1,11 @@
 import { useRef, useState } from "react";
 
-// Puntos por velocidad
 function calcTimePoints(timeUsed, totalTime) {
   if (timeUsed <= 0) return 100;
   const ratio = 1 - timeUsed / totalTime;
   return Math.round(20 + ratio * 80);
 }
 
-// - Incorrectas → 0 pts
-// - Todas correctas → 100 pts
-// - Parcial (solo acertadas, sin incorrectas)
 function calcMultiplePoints(selected, answers) {
   const correctIndexes = answers
     .map((a, idx) => (a.is_correct ? idx : null))
@@ -34,24 +30,7 @@ const playSound = (src, volume = 0.6) => {
   audio.play().catch(() => {});
 };
 
-/**
- *
- * @param {object} params
- * @param {object|null} params.question  - Pregunta activa
- * @param {object}      params.ws        - ref del WebSocket (.current)
- * @param {function}    params.onAnswered - Callback cuando se confirma la respuesta y recibe { correct, partial, points }
- *
- * @returns {{
- *   countdown: number,
- *   startCountdown: (secs: number) => void,
- *   selected: null | number | number[],
- *   setSelected: function,
- *   result: { correct: boolean, partial: boolean, points: number } | null,
- *   submitAnswer: (i: number | "confirm") => void,
- *   resetAnswer: () => void,
- * }}
- */
-export function useGameAnswer({ question, ws, onAnswered }) {
+export function useGameAnswer({ question, ws, getTimeUsed, onAnswered }) {
   const countdownRef = useRef(null);
 
   const [countdown, setCountdown] = useState(20);
@@ -73,6 +52,7 @@ export function useGameAnswer({ question, ws, onAnswered }) {
   };
 
   const stopCountdown = () => clearInterval(countdownRef.current);
+
   const resetAnswer = (isMultiple = false) => {
     setSelected(isMultiple ? [] : null);
     setResult(null);
@@ -113,7 +93,7 @@ export function useGameAnswer({ question, ws, onAnswered }) {
       stopCountdown();
 
       const totalTime = question.time || 20;
-      const timeUsed = totalTime - countdown;
+      const timeUsed = getTimeUsed?.() ?? totalTime;
       const isCorrect = question.answers?.[i]?.is_correct ?? false;
       const points = isCorrect ? calcTimePoints(timeUsed, totalTime) : 0;
 
