@@ -13,6 +13,7 @@ import ProtectedRoute from "./components/layout/ProtectedRoute";
 import AdminDashboard from "./pages/AdminDashboard";
 import QuizPDF from "./pages/QuizPDF";
 import Learn from "./pages/Learn";
+import Discover from "./pages/Discover";
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
         <Route path="/host/:roomId" element={<HostGame />} />
         <Route path="/present" element={<Presentgame />} />
         <Route path="/learn" element={<Learn />} />
+        <Route path="/discover" element={<Discover />} />
         <Route
           path="/quiz/create"
           element={
