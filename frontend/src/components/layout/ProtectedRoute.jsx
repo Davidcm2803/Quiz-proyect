@@ -2,25 +2,21 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useEffect } from "react";
 
-/*
-  CAMBIA ESTE VALOR:
-  true  = desactiva login (modo desarrollo)
-  false = comportamiento normal con login
-*/
-const BYPASS_AUTH = true;
+const BYPASS_AUTH = false;
 
 export default function ProtectedRoute({ children }) {
-  const { user } = useAuth();
+  const { token, isLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!BYPASS_AUTH && !user) {
+    if (!BYPASS_AUTH && !token && !isLoading) {
       alert("Debes iniciar sesión para acceder a esta sección.");
       navigate("/signup");
     }
-  }, [user, navigate]);
+  }, [token, isLoading, navigate]);
 
-  if (!BYPASS_AUTH && !user) return null;
+  if (isLoading) return null;
+  if (!BYPASS_AUTH && !token) return null;
 
   return children;
 }

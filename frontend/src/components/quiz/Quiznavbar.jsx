@@ -10,7 +10,7 @@ export default function QuizNavbar({ title, onTitleChange, onExit, onSave, savin
       <img
         src={logo}
         alt="QHit logo"
-        className="h-16 w-auto object-contain cursor-pointer flex-shrink-0"
+        className="h-20 w-auto object-contain cursor-pointer flex-shrink-0"
         onClick={() => navigate("/")}
       />
       <input

@@ -37,10 +37,9 @@ export default function QuizPDF() {
 
   return (
     <div className="bg-[#F8FBF3] min-h-screen flex flex-col">
-      <CardNavbar title="Quiz PDF" />
+      <CardNavbar title="Quiz PDF" icon={FileText} iconColor="#f43f5e" />
       <div className="flex-1 flex items-center justify-center px-6 py-10">
         <div className="w-full max-w-xl flex flex-col gap-6">
-
           <div className="text-center">
             <div className="w-14 h-14 bg-[#f43f5e] rounded-2xl flex items-center justify-center mx-auto mb-4">
               <FileText size={28} color="white" />
@@ -55,8 +54,14 @@ export default function QuizPDF() {
 
           <div className="bg-white rounded-3xl shadow-[0_8px_40px_rgba(0,0,0,0.08)] border border-gray-100 p-6 flex flex-col gap-4">
             <div
-              onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-              onDragLeave={(e) => { e.preventDefault(); setDragging(false); }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragging(true);
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                setDragging(false);
+              }}
               onDrop={(e) => {
                 e.preventDefault();
                 setDragging(false);
@@ -67,8 +72,8 @@ export default function QuizPDF() {
                 dragging
                   ? "bg-red-50 border-[#f43f5e]"
                   : file
-                  ? "bg-green-50 border-green-300"
-                  : "bg-gray-50 border-gray-200 hover:border-[#f43f5e] hover:bg-red-50"
+                    ? "bg-green-50 border-green-300"
+                    : "bg-gray-50 border-gray-200 hover:border-[#f43f5e] hover:bg-red-50"
               }`}
             >
               <input
@@ -78,20 +83,30 @@ export default function QuizPDF() {
                 className="hidden"
                 onChange={(e) => handleFile(e.target.files[0])}
               />
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl ${
-                file ? "bg-green-100" : "bg-gray-100"
-              }`}>
+              <div
+                className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl ${
+                  file ? "bg-green-100" : "bg-gray-100"
+                }`}
+              >
                 {file ? "✅" : "📄"}
               </div>
               {file ? (
                 <div>
-                  <p className="text-sm font-semibold text-gray-700">{file.name}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Click para cambiar archivo</p>
+                  <p className="text-sm font-semibold text-gray-700">
+                    {file.name}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Click para cambiar archivo
+                  </p>
                 </div>
               ) : (
                 <div>
-                  <p className="text-sm font-semibold text-gray-600">Arrastra tu PDF aquí</p>
-                  <p className="text-xs text-gray-400 mt-0.5">o haz click para explorar archivos</p>
+                  <p className="text-sm font-semibold text-gray-600">
+                    Arrastra tu PDF aquí
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    o haz click para explorar archivos
+                  </p>
                 </div>
               )}
             </div>

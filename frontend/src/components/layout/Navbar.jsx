@@ -11,9 +11,9 @@ import { useAuth } from "../../context/AuthContext";
 
 const NAV_ITEMS = [
   { label: "Discover", Icon: Compass,       path: "/discover" },
-  { label: "Learn",    Icon: GraduationCap, path: "/learn" },
-  { label: "Present",  Icon: Play,          path: "/present" },
-  { label: "Make",     Icon: Settings,      path: "/" },
+  { label: "Learn",    Icon: GraduationCap, path: "/learn"    },
+  { label: "Present",  Icon: Play,          path: "/present"  },
+  { label: "Make",     Icon: Settings,      path: "/"         },
 ];
 
 export default function Navbar() {
@@ -31,7 +31,6 @@ export default function Navbar() {
           className="h-20 w-auto object-contain cursor-pointer"
           onClick={() => navigate("/")}
         />
-
         <div className="hidden md:flex items-center gap-2 flex-1 ml-2">
           {NAV_ITEMS.map(({ label, Icon, path }) => (
             <NavItem
@@ -47,7 +46,6 @@ export default function Navbar() {
             onClick={() => navigate("/join")}
           />
         </div>
-
         <div className="hidden md:flex items-center gap-3">
           {user ? (
             <UserDropdown />
@@ -57,7 +55,6 @@ export default function Navbar() {
             </Button>
           )}
         </div>
-
         <button
           className="md:hidden flex items-center justify-center w-9 h-9 rounded-xl bg-white/60 hover:bg-white/90 transition-all shadow-sm border border-black/10"
           onClick={() => setOpen((o) => !o)}
@@ -65,7 +62,6 @@ export default function Navbar() {
           {open ? <X size={18} strokeWidth={2.5} /> : <Menu size={18} strokeWidth={2.5} />}
         </button>
       </nav>
-
       <MobileMenu
         open={open}
         onClose={() => setOpen(false)}

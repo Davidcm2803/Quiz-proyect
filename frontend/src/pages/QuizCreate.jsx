@@ -67,6 +67,14 @@ export default function QuizCreate() {
         onSelect={quiz.setActiveIndex}
         onAdd={quiz.addQuestion}
         onDelete={quiz.deleteQuestion}
+        timeLimit={quiz.active.timeLimit}
+        onTimeChange={(val) => quiz.updateActive("timeLimit", val)}
+        answerType={quiz.active.answerType}
+        onAnswerTypeChange={(val) => quiz.updateActive("answerType", val)}
+        mode={quiz.mode}
+        onModeChange={quiz.setMode}
+        scheduledAt={quiz.scheduledAt}
+        onScheduledAtChange={quiz.setScheduledAt}
       />
     </div>
   );

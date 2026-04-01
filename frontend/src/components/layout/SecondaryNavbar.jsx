@@ -1,6 +1,6 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Globe } from "lucide-react";
-import { useState } from "react";
 import logo from "../../assets/logo.png";
 
 export default function SecondaryNavbar({ onLanguageChange }) {
@@ -21,7 +21,6 @@ export default function SecondaryNavbar({ onLanguageChange }) {
         className="h-20 w-auto object-contain cursor-pointer"
         onClick={() => navigate("/")}
       />
-
       <button
         onClick={toggleLang}
         className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-all text-sm font-medium text-gray-700"
