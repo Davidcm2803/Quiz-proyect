@@ -29,7 +29,7 @@ const TOOLS = [
     icon: <Sparkles size={22} strokeWidth={2} color="white" />,
     title: "Save time! Create kahoots with AI",
     buttonLabel: "Start creating",
-    path: null,
+    path: "/quiz/ai",
   },
   {
     id: 3,
@@ -37,7 +37,7 @@ const TOOLS = [
     icon: <FileText size={22} strokeWidth={2} color="white" />,
     title: "Generate a kahoot from your PDF file in one click",
     buttonLabel: "Create",
-    path: null,
+    path: "/quiz/pdf", 
   },
   {
     id: 4,
@@ -71,7 +71,7 @@ function ToolCard({ bgColor, icon, title, buttonLabel, path }) {
   return (
     <div
       style={{ backgroundColor: bgColor }}
-      className="rounded-xl p-4 h-40 flex flex-col justify-between shadow-md w-full"
+      className="rounded-xl p-4 h-40 flex flex-col justify-between shadow-md w-full cursor-pointer"
     >
       <div className="flex items-center gap-3">
         <div
@@ -80,13 +80,14 @@ function ToolCard({ bgColor, icon, title, buttonLabel, path }) {
         >
           {icon}
         </div>
-        <p className="text-white font-semibold text-sm leading-snug">{title}</p>
+        <p className="text-white font-semibold text-m leading-snug">{title}</p>
       </div>
+
       <div className="flex justify-end">
         <Button
           variant="secondary"
-          size="sm"
-          className="rounded-full"
+          size="m"
+          className="rounded-full px-6 py-2 text-base shadow-md hover:shadow-lg"
           onClick={() => path && navigate(path)}
         >
           {buttonLabel}
@@ -99,20 +100,20 @@ function ToolCard({ bgColor, icon, title, buttonLabel, path }) {
 const GAP = 20;
 
 function getVisible(width) {
-  if (width < 640)  return 1;
+  if (width < 640) return 1;
   if (width < 1024) return 2;
   return 3;
 }
 
 export default function Carousel() {
-  const [current, setCurrent]               = useState(0);
-  const [isHovered, setIsHovered]           = useState(false);
+  const [current, setCurrent] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
 
   const containerRef = useRef(null);
-  const total        = TOOLS.length;
-  const visible      = getVisible(containerWidth);
-  const maxIndex     = Math.max(0, total - visible);
+  const total = TOOLS.length;
+  const visible = getVisible(containerWidth);
+  const maxIndex = Math.max(0, total - visible);
 
   useEffect(() => {
     const observer = new ResizeObserver((entries) => {
@@ -126,8 +127,15 @@ export default function Carousel() {
     setCurrent((c) => Math.min(c, maxIndex));
   }, [maxIndex]);
 
-  const next = useCallback(() => setCurrent((c) => (c >= maxIndex ? 0 : c + 1)), [maxIndex]);
-  const prev = useCallback(() => setCurrent((c) => (c <= 0 ? maxIndex : c - 1)), [maxIndex]);
+  const next = useCallback(
+    () => setCurrent((c) => (c >= maxIndex ? 0 : c + 1)),
+    [maxIndex]
+  );
+
+  const prev = useCallback(
+    () => setCurrent((c) => (c <= 0 ? maxIndex : c - 1)),
+    [maxIndex]
+  );
 
   useEffect(() => {
     if (isHovered) return;
@@ -135,19 +143,20 @@ export default function Carousel() {
     return () => clearInterval(id);
   }, [isHovered, next]);
 
-  const cardWidth = containerWidth > 0
-    ? (containerWidth - GAP * (visible - 1)) / visible
-    : 0;
+  const cardWidth =
+    containerWidth > 0
+      ? (containerWidth - GAP * (visible - 1)) / visible
+      : 0;
 
   const offset = current * (cardWidth + GAP);
 
   return (
     <section className="py-6 w-full relative">
-      <h2 className="text-2xl font-black text-gray-900 mb-3 text-left ml-14">
+      <h2 className="text-2xl font-black text-gray-900 mb-4 text-left ml-14">
         Quick tools to get started
       </h2>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 mb-0">
         <CarouselArrow onClick={prev}>
           <ChevronLeft size={18} strokeWidth={2.5} />
         </CarouselArrow>

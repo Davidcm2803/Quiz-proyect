@@ -10,3 +10,5 @@ questions = db.questions
 answers = db.answers
 sessions = db.sessions
 rankings = db.rankings
+users = db.users
+

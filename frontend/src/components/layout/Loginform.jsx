@@ -1,12 +1,138 @@
 import { useState } from "react";
 import IconButton from "../ui/IconButtons";
 import LoginButton from "../ui/LoginButton";
-import { GoogleIcon, MicrosoftIcon, AppleIcon, OtherIcon } from "../ui/Icons";
+import { GoogleIcon, MicrosoftIcon } from "../ui/Icons";
+import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { signInWithGoogle, signInWithMicrosoft, resetPassword } from "../../firebase/firebase";
 
 export default function LoginForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [focusedField, setFocusedField] = useState(null);
+  const [error, setError] = useState("");
+  const [resetEmail, setResetEmail] = useState("");
+  const [showReset, setShowReset] = useState(false);
+  const [resetMessage, setResetMessage] = useState("");
+  const { login } = useAuth();
+
+  const handleLogin = async () => {
+    console.log("1. handleLogin called");
+    console.log("username:", username, "password:", password);
+
+    try {
+      if (!username || !password) {
+        setError("Please fill all fields");
+        console.log("2. empty fields");
+        return;
+      }
+
+      console.log("3. sending fetch...");
+      const response = await fetch("http://localhost:8000/users/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: username, password: password }),
+      });
+
+      console.log("4. response status:", response.status);
+      const data = await response.json();
+      console.log("5. data:", data);
+
+      if (!response.ok) {
+        const msg = Array.isArray(data.detail)
+          ? data.detail[0]?.msg || "Error de validación"
+          : data.detail || "Login failed";
+        setError(msg);
+        console.log("6. not ok:", msg);
+        return;
+      }
+
+      console.log("7. calling login()");
+      login(data.access_token, data.user);
+      console.log("8. calling window.location.href");
+      window.location.href = "/";
+    } catch (err) {
+      console.error("CATCH ERROR:", err);
+      setError("Server connection error");
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      const result = await signInWithGoogle();
+      if (!result) return;
+
+      const response = await fetch("http://localhost:8000/users/google-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id_token: result.idToken }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.detail || "Google login failed");
+        return;
+      }
+
+      login(data.access_token, data.user);
+      window.location.href = "/";
+    } catch (error) {
+      if (error.message === "POPUP_BLOCKED") {
+        setError("Allow popups for this site and try again.");
+        return;
+      }
+      console.error(error);
+      setError("Google login error");
+    }
+  };
+
+  const handleMicrosoftLogin = async () => {
+    try {
+      const result = await signInWithMicrosoft();
+      if (!result) return;
+
+      const response = await fetch("http://localhost:8000/users/microsoft-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id_token: result.idToken }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.detail || "Microsoft login failed");
+        return;
+      }
+
+      login(data.access_token, data.user);
+      window.location.href = "/";
+    } catch (error) {
+      if (error.message === "POPUP_BLOCKED") {
+        setError("Allow popups for this site and try again.");
+        return;
+      }
+      console.error(error);
+      setError("Microsoft login error");
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetEmail) {
+      setResetMessage("Please enter your email.");
+      return;
+    }
+    try {
+      await resetPassword(resetEmail);
+      setResetMessage("Check your email Spam for the reset link :)");
+    } catch (error) {
+      if (error.code === "auth/user-not-found") {
+        setResetMessage("No account found with that email.");
+      } else {
+        setResetMessage("Something went wrong. Try again.");
+      }
+    }
+  };
 
   return (
     <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-[#F8FBF3] font-serif">
@@ -17,12 +143,10 @@ export default function LoginForm() {
 
         <div className="flex gap-2.5 mb-4">
           {[
-            { icon: <GoogleIcon />, label: "Google" },
-            { icon: <MicrosoftIcon />, label: "Microsoft" },
-            { icon: <AppleIcon />, label: "Apple" },
-            { icon: <OtherIcon />, label: "Other" },
-          ].map(({ icon, label }) => (
-            <IconButton key={label} icon={icon} label={label} onClick={() => {}} />
+            { icon: <GoogleIcon />, label: "Google", onClick: handleGoogleLogin },
+            { icon: <MicrosoftIcon />, label: "Microsoft", onClick: handleMicrosoftLogin },
+          ].map(({ icon, label, onClick }) => (
+            <IconButton key={label} icon={icon} label={label} onClick={onClick} />
           ))}
         </div>
 
@@ -58,21 +182,25 @@ export default function LoginForm() {
             focusedField === "password" ? "border-[#555]" : "border-[#ddd]"
           }`}
         />
+        {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
 
         <p className="text-[13px] text-[#555] mb-[18px]">
           Forgot password?{" "}
-          <a href="#" className="text-[#1a1a1a] font-semibold underline">
+          <button
+            onClick={() => { setShowReset(true); setResetMessage(""); }}
+            className="text-[#1a1a1a] font-semibold underline bg-transparent border-none cursor-pointer p-0"
+          >
             Reset your password
-          </a>
+          </button>
         </p>
 
-        <LoginButton>Log in</LoginButton>
+        <LoginButton onClick={handleLogin}>Log in</LoginButton>
 
         <p className="text-sm text-center text-[#555] mb-5">
           Don't have an account?{" "}
-          <a href="#" className="text-[#1a1a1a] font-semibold underline">
+          <Link to="/register" className="text-[#1a1a1a] font-semibold underline">
             Sign up
-          </a>
+          </Link>
         </p>
 
         <p className="text-xs text-[#888] leading-relaxed">
@@ -82,6 +210,39 @@ export default function LoginForm() {
           <a href="#" className="text-[#666] underline">Privacy Notice</a>.
         </p>
       </div>
+
+      {showReset && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 w-[320px] shadow-lg border border-[#e8e0d4]">
+            <h3 className="text-lg font-bold text-[#1a1a1a] mb-2">Reset your password</h3>
+            <p className="text-sm text-[#666] mb-4">Enter your email and we'll send you a reset link.</p>
+            <input
+              type="email"
+              placeholder="Your email"
+              value={resetEmail}
+              onChange={(e) => setResetEmail(e.target.value)}
+              className="w-full px-[14px] py-[11px] border border-[#ddd] rounded-lg text-sm text-[#333] bg-white outline-none mb-3 box-border"
+            />
+            {resetMessage && (
+              <p className={`text-sm mb-3 ${resetMessage.includes("Check") ? "text-green-600" : "text-red-500"}`}>
+                {resetMessage}
+              </p>
+            )}
+            <button
+              onClick={handleResetPassword}
+              className="w-full py-[11px] bg-[#1a1a1a] text-white rounded-lg text-sm font-semibold mb-2 hover:bg-[#333] transition-colors"
+            >
+              Send reset link
+            </button>
+            <button
+              onClick={() => { setShowReset(false); setResetEmail(""); setResetMessage(""); }}
+              className="w-full py-[11px] bg-white border border-[#ddd] rounded-lg text-sm text-gray-700 hover:border-gray-400 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

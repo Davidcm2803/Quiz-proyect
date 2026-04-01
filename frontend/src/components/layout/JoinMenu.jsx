@@ -1,9 +1,42 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import GamePin from "../ui/Gamepin";
 import FloatingDecorations from "../ui/FloatingDecorations";
 import logo from "../../assets/logo.png";
 
 export default function JoinMenu() {
-  const handleJoin = (pin) => console.log("Joining with pin:", pin);
+  const navigate = useNavigate();
+  const [step, setStep] = useState("pin");
+  const [pin, setPin] = useState("");
+  const [nickname, setNickname] = useState("");
+  const [error, setError] = useState("");
+  const [joining, setJoining] = useState(false);
+
+  const handlePin = (code) => {
+    setPin(code);
+    setStep("nickname");
+  };
+
+  const handleJoin = async () => {
+    if (!nickname.trim()) { setError("Ingresa tu nombre"); return; }
+    setJoining(true);
+    try {
+      const res = await fetch(`http://localhost:8000/quizzes/by-pin/${pin}`);
+      const quiz = await res.json();
+      const mode = quiz?.mode || "normal";
+      const name = nickname.trim();
+
+      if (mode === "presentacion") {
+        navigate(`/present/${pin}/${name}`);
+      } else {
+        navigate(`/student/${pin}/${name}`);
+      }
+    } catch {
+      setError("No se pudo conectar. Verifica el código.");
+    } finally {
+      setJoining(false);
+    }
+  };
 
   return (
     <>
@@ -18,14 +51,35 @@ export default function JoinMenu() {
 
       <div className="fixed inset-0 bg-[#F8FBF3] flex items-center justify-center overflow-hidden">
         <FloatingDecorations />
-
         <div className="join-content relative z-10 flex flex-col items-center w-[min(420px,90vw)]">
-          <img
-            src={logo}
-            alt="QHit logo"
-            className="w-full object-contain block -mb-[90px]"
-          />
-          <GamePin onJoin={handleJoin} />
+          <img src={logo} alt="QHit logo" className="w-full object-contain block -mb-[90px]" />
+
+          {step === "pin" ? (
+            <GamePin onJoin={handlePin} />
+          ) : (
+            <div className="flex flex-col gap-3 p-6 rounded-2xl shadow-lg w-full bg-[#fde8e0]">
+              <input
+                type="text"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleJoin()}
+                placeholder="TU NOMBRE"
+                autoFocus
+                className="w-full text-center text-lg font-bold tracking-widest uppercase placeholder:text-gray-400 bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-gray-800 transition-all"
+              />
+              {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+              <button
+                onClick={handleJoin}
+                disabled={!nickname.trim() || joining}
+                className="w-full bg-black text-white font-bold text-sm py-3 rounded-xl transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {joining ? "Conectando..." : "UNIRSE"}
+              </button>
+              <button onClick={() => setStep("pin")} className="text-xs text-gray-500 underline text-center">
+                Cambiar código
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </>
