@@ -1,6 +1,6 @@
 import Navbar from "../components/layout/Navbar";
 import Carousel from "../components/layout/Carousel";
-import CarouselCategories from "../components/layout/CarouselCategories";
+import CarouselCategories from "../components/categories/CarouselCategories";
 
 export default function Home() {
   return (
