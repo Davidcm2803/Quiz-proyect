@@ -10,6 +10,11 @@ export default function StudentGame() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (String(roomId).startsWith("daily-")) {
+      setMode("normal");
+      setLoading(false);
+      return;
+    }
     getQuizFullByPin(roomId)
       .then((data) => {
         const quizMode = data?.mode || "normal";
@@ -29,5 +34,5 @@ export default function StudentGame() {
     </div>
   );
 
-  return <StudentGameMenu />; 
+  return <StudentGameMenu />;
 }

@@ -8,12 +8,16 @@ from app.utils.security import hash_password, verify_password, create_access_tok
 from firebase_admin import credentials, auth as firebase_auth
 import firebase_admin
 import os
-
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-cred = credentials.Certificate(os.path.join(BASE_DIR, "serviceAccountKey.json"))
+import json
 
 if not firebase_admin._apps:
-    cred = credentials.Certificate("serviceAccountKey.json")
+    firebase_env = os.environ.get("FIREBASE_CREDENTIALS")
+    if firebase_env:
+        firebase_credentials = json.loads(firebase_env)
+        cred = credentials.Certificate(firebase_credentials)
+    else:
+        BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        cred = credentials.Certificate(os.path.join(BASE_DIR, "serviceAccountKey.json"))
     firebase_admin.initialize_app(cred)
 
 router = APIRouter(prefix="/users", tags=["Users"])
