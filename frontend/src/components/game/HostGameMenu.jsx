@@ -228,7 +228,7 @@ export default function HostGameMenu() {
   const modeInfo = MODE_LABELS[quizMode] || MODE_LABELS.normal;
   const hasScheduled = !!scheduledAt;
   const scheduledInFuture = hasScheduled && timeUntilStart !== null && timeUntilStart > 0;
-  const joinUrl = `${window.location.origin}/present/${roomId}`;
+  const joinUrl = `${window.location.origin}/join?pin=${roomId}`;
 
   if (phase === "lobby") return (
     <div className="bg-[#F8FBF3] min-h-screen flex flex-col">
