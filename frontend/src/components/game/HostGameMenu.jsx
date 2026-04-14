@@ -1,12 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
 import ScoreBoard from "./ScoreBoard";
 import Navbar from "../layout/Navbar";
 import Button from "../ui/Button";
 import { getQuizFullByPin } from "../../database/database";
-import config from "../../config";
 
-const WS_URL = config.WS_URL;
+const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8000";
 
 const COLORS = ["bg-[#e21b3c]", "bg-[#1368ce]", "bg-[#d89e00]", "bg-[#26890c]"];
 const ICONS = ["▲", "◆", "●", "■"];
@@ -91,10 +92,7 @@ export default function HostGameMenu() {
       }
     };
 
-    if (delay <= 0) {
-      trigger();
-      return;
-    }
+    if (delay <= 0) { trigger(); return; }
 
     autoStartRef.current = setTimeout(trigger, delay);
     return () => clearTimeout(autoStartRef.current);
@@ -104,7 +102,6 @@ export default function HostGameMenu() {
     const timeout = setTimeout(() => {
       ws.current = new WebSocket(`${WS_URL}/ws/${roomId}/host`);
       ws.current.onopen = () => {
-        console.log("✅ Host conectado al WS");
         if (pendingAutoStart.current) {
           pendingAutoStart.current = false;
           startQuizWithQuestions(questionsRef.current);
@@ -231,6 +228,7 @@ export default function HostGameMenu() {
   const modeInfo = MODE_LABELS[quizMode] || MODE_LABELS.normal;
   const hasScheduled = !!scheduledAt;
   const scheduledInFuture = hasScheduled && timeUntilStart !== null && timeUntilStart > 0;
+  const joinUrl = `${window.location.origin}/join?pin=${roomId}`;
 
   if (phase === "lobby") return (
     <div className="bg-[#F8FBF3] min-h-screen flex flex-col">
@@ -251,6 +249,17 @@ export default function HostGameMenu() {
                 <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${modeInfo.color}`}>
                   {modeInfo.icon} {modeInfo.label}
                 </span>
+              </div>
+
+              <div className="flex flex-col items-center gap-2 mt-6">
+                <QRCodeSVG
+                  value={joinUrl}
+                  size={140}
+                  bgColor="transparent"
+                  fgColor="#1a1a1a"
+                  className="rounded-xl"
+                />
+                <p className="text-[#1a1a1a]/40 text-xs">Escanea para unirte</p>
               </div>
             </div>
 
@@ -352,11 +361,7 @@ export default function HostGameMenu() {
         </h2>
 
         {current.image && (
-          <img
-            src={current.image}
-            alt=""
-            className="w-full max-w-5xl max-h-[260px] sm:max-h-[320px] object-contain rounded-2xl"
-          />
+          <img src={current.image} alt="" className="w-full max-w-5xl max-h-[260px] sm:max-h-[320px] object-contain rounded-2xl" />
         )}
 
         {showingScores ? (
@@ -364,9 +369,7 @@ export default function HostGameMenu() {
             <ScoreBoard scores={scores} />
             <div className="flex gap-4">
               <Button variant="secondary" onClick={() => setShowingScores(false)}>← Volver</Button>
-              <Button variant="save" onClick={() => { broadcastScores(); }}>
-                Mostrar scores a todos
-              </Button>
+              <Button variant="save" onClick={() => { broadcastScores(); }}>Mostrar scores a todos</Button>
               <Button variant="save" onClick={nextQuestion}>
                 {qIndex + 1 >= quizQuestions.length ? "Finalizar" : "Siguiente →"}
               </Button>
@@ -382,7 +385,6 @@ export default function HostGameMenu() {
                 </div>
               ))}
             </div>
-
             <div className="flex gap-4">
               <Button variant="secondary" onClick={() => setShowingScores(true)}>Ver scores</Button>
               <Button variant="save" onClick={() => { broadcastScores(); }}>

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import GamePin from "../ui/GamePin";
 import FloatingDecorations from "../ui/FloatingDecorations";
 import logo from "../../assets/logo.png";
@@ -7,11 +7,20 @@ import config from "../../config";
 
 export default function JoinMenu() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState("pin");
   const [pin, setPin] = useState("");
   const [nickname, setNickname] = useState("");
   const [error, setError] = useState("");
   const [joining, setJoining] = useState(false);
+
+  useEffect(() => {
+    const pinFromUrl = searchParams.get("pin");
+    if (pinFromUrl) {
+      setPin(pinFromUrl);
+      setStep("nickname");
+    }
+  }, []);
 
   const handlePin = (code) => {
     setPin(code);
