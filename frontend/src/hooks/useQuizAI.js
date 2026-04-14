@@ -1,8 +1,9 @@
 import { useState } from "react";
+import config from "../config";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_API_KEY = import.meta.env.VITE_QHIT_KEY;
-const UNSPLASH_KEY = import.meta.env.VITE_UNSPLASH_KEY;
+const GROQ_API_KEY = config.GROQ_KEY;
+const UNSPLASH_KEY = config.UNSPLASH_KEY;
 const MODEL = "llama-3.1-8b-instant";
 
 const simplifyImageQuery = async (question) => {

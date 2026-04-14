@@ -3,7 +3,7 @@ import logo from "../../assets/logo.png";
 import { useDailyQuiz } from "../../hooks/useDailyQuizzes";
 
 const CATEGORY_IMAGES = {
-  science: "https://images.unsplash.com/photo-1532094349884-543290e4c3a9?w=1200&q=80",
+  science: "https://images.unsplash.com/photo-1518152006812-edab29b069ac?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   mathematics: "https://images.unsplash.com/photo-1509228468518-180dd4864904?w=1200&q=80",
   history: "https://images.unsplash.com/photo-1461360370896-922624d12aa1?w=1200&q=80",
   languages: "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=1200&q=80",

@@ -3,6 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useNormalQuiz } from "../../hooks/useNormalQuiz";
 import FloatingDecorations from "../ui/FloatingDecorations";
 import quizsong from "../../assets/quizsong.mp3";
+import config from "../../config";
+
+// config disponible para hooks o extensiones futuras
+const { API_URL, WS_URL } = config;
 
 const COLORS = ["bg-[#e21b3c]", "bg-[#1368ce]", "bg-[#d89e00]", "bg-[#26890c]"];
 const ICONS = ["▲", "◆", "●", "■"];

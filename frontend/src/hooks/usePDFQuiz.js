@@ -1,12 +1,13 @@
-// usePDFQuiz.js
 import { useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker?url";
 import { fetchImage } from "./useQuizAI";
+import config from "../config";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_API_KEY = config.GROQ_KEY;
 const MODEL = "llama-3.1-8b-instant";
 
 export default function usePDFQuiz({ setTitle, setQuestions, setActiveIndex }) {
@@ -54,7 +55,7 @@ export default function usePDFQuiz({ setTitle, setQuestions, setActiveIndex }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_QHIT_KEY}`,
+          Authorization: `Bearer ${GROQ_API_KEY}`,
         },
         body: JSON.stringify({
           model: MODEL,

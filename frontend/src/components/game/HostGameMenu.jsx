@@ -4,8 +4,9 @@ import ScoreBoard from "./ScoreBoard";
 import Navbar from "../layout/Navbar";
 import Button from "../ui/Button";
 import { getQuizFullByPin } from "../../database/database";
+import config from "../../config";
 
-const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8000";
+const WS_URL = config.WS_URL;
 
 const COLORS = ["bg-[#e21b3c]", "bg-[#1368ce]", "bg-[#d89e00]", "bg-[#26890c]"];
 const ICONS = ["▲", "◆", "●", "■"];
@@ -38,9 +39,7 @@ export default function HostGameMenu() {
   const qIndexRef = useRef(0);
   const autoStartRef = useRef(null);
   const hasAutoStarted = useRef(false);
-  // Keep a ref to questions so auto-start closure always sees the latest value
   const questionsRef = useRef([]);
-  // Pending auto-start: if WS isn't open yet when the time arrives, fire as soon as it opens
   const pendingAutoStart = useRef(false);
 
   const current = quizQuestions[qIndex];
@@ -65,7 +64,6 @@ export default function HostGameMenu() {
       });
   }, [roomId]);
 
-  // Countdown ticker for normal mode with scheduled time
   useEffect(() => {
     if (!scheduledAt || quizMode !== "normal") return;
     const tick = () => {
@@ -77,7 +75,6 @@ export default function HostGameMenu() {
     return () => clearInterval(id);
   }, [scheduledAt, quizMode]);
 
-  // Auto-start scheduler — uses refs so it never has stale closure issues
   useEffect(() => {
     if (!scheduledAt || quizMode !== "normal" || phase !== "lobby") return;
     if (hasAutoStarted.current) return;
@@ -87,7 +84,6 @@ export default function HostGameMenu() {
     const trigger = () => {
       if (hasAutoStarted.current) return;
       hasAutoStarted.current = true;
-      // If WS is already open, start immediately; otherwise mark pending
       if (ws.current?.readyState === WebSocket.OPEN) {
         startQuizWithQuestions(questionsRef.current);
       } else {
@@ -109,7 +105,6 @@ export default function HostGameMenu() {
       ws.current = new WebSocket(`${WS_URL}/ws/${roomId}/host`);
       ws.current.onopen = () => {
         console.log("✅ Host conectado al WS");
-        // Fire pending auto-start if the timer already fired before WS was ready
         if (pendingAutoStart.current) {
           pendingAutoStart.current = false;
           startQuizWithQuestions(questionsRef.current);
@@ -181,7 +176,6 @@ export default function HostGameMenu() {
     startCountdown(q.time || 20);
   };
 
-  // Used by manual button — reads from state (fine, user clicked so state is settled)
   const startQuiz = () => {
     clearTimeout(autoStartRef.current);
     hasAutoStarted.current = true;
@@ -189,7 +183,6 @@ export default function HostGameMenu() {
     launchQuestion(0, questionsRef.current);
   };
 
-  // Used by auto-start — always receives questions explicitly to avoid stale closures
   const startQuizWithQuestions = (questions) => {
     clearTimeout(autoStartRef.current);
     send({ event: "startQuiz" });
@@ -289,7 +282,6 @@ export default function HostGameMenu() {
 
             <div className="h-px bg-gray-100 mx-8" />
 
-            {/* Normal mode: auto-starts at scheduled time, host can also start manually */}
             {quizMode === "normal" && (
               <div className="px-8 py-6 flex flex-col gap-3">
                 {hasScheduled ? (
@@ -314,7 +306,6 @@ export default function HostGameMenu() {
               </div>
             )}
 
-            {/* Presentacion mode: host controls everything manually */}
             {quizMode === "presentacion" && (
               <div className="px-8 py-6">
                 <button

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import GamePin from "../ui/Gamepin";
 import FloatingDecorations from "../ui/FloatingDecorations";
 import logo from "../../assets/logo.png";
+import config from "../../config";
 
 export default function JoinMenu() {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ export default function JoinMenu() {
     if (!nickname.trim()) { setError("Ingresa tu nombre"); return; }
     setJoining(true);
     try {
-      const res = await fetch(`http://localhost:8000/quizzes/by-pin/${pin}`);
+      const res = await fetch(`${config.API_URL}/quizzes/by-pin/${pin}`);
       const quiz = await res.json();
       const mode = quiz?.mode || "normal";
       const name = nickname.trim();

@@ -1,8 +1,8 @@
-// hooks/useDailyQuizzes.js
 import { useState, useEffect } from "react";
+import config from "../config";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_API_KEY = import.meta.env.VITE_QHIT_KEY;
+const GROQ_API_KEY = config.GROQ_KEY;
 const MODEL = "llama-3.1-8b-instant";
 
 const CATEGORIES = ["science", "mathematics", "history", "languages", "technology", "art-and-design"];

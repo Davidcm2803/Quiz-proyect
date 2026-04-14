@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import config from "../config";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL = config.API_URL;
 
 function calcTimePoints(timeUsed, totalTime) {
   if (timeUsed <= 0) return 100;

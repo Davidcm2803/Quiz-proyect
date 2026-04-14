@@ -2,8 +2,8 @@ import { useState } from "react";
 import { X, CheckCircle2, Loader2, User } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import Button from "../ui/Button";
+import config from "../../config";
 
-const BASE_URL = "http://localhost:8000";
 const MIN = 3;
 const MAX = 30;
 const REGEX = /^[a-zA-Z0-9._]+$/;
@@ -33,7 +33,7 @@ export default function ChangeUsernameModal({ onClose }) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${BASE_URL}/users/${user.id}/username`, {
+      const res = await fetch(`${config.API_URL}/users/${user.id}/username`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: username.trim() }),
