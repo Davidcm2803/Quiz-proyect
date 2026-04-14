@@ -110,7 +110,8 @@ const extractJSON = (raw) => {
   } catch {
     const lastCompleteQuestion = clean.lastIndexOf("},\n    {");
     if (lastCompleteQuestion !== -1) {
-      const truncated = clean.slice(0, lastCompleteQuestion + 1) + "\n  ]\n}";
+      const truncated =
+        clean.slice(0, lastCompleteQuestion + 1) + "\n  ]\n}";
       return JSON.parse(truncated);
     }
     throw new Error("Could not recover valid JSON from response");
@@ -130,16 +131,27 @@ const validateQuiz = (parsed) => {
       (q) =>
         typeof q.question === "string" &&
         Array.isArray(q.answers) &&
-        q.answers.length >= 2 &&
+        q.answers.length === 4 &&
         (typeof q.correct === "number" || Array.isArray(q.correct)),
     )
-    .map((q) => ({
-      question: q.question,
-      answers: q.answers,
-      correct: q.correct,
-      timeLimit: [15, 20, 30].includes(q.timeLimit) ? q.timeLimit : 20,
-      answerType: q.answerType === "multiple" ? "multiple" : "single",
-    }));
+    .map((q) => {
+      const isMultiple = q.answerType === "multiple";
+      const correctIndexes = isMultiple
+        ? Array.isArray(q.correct)
+          ? q.correct
+          : [q.correct]
+        : [q.correct];
+
+      return {
+        text: q.question,
+        answers: q.answers.map((a, i) => ({
+          text: typeof a === "string" ? a : a.text,
+          correct: correctIndexes.includes(i),
+        })),
+        time: [15, 20, 30].includes(q.timeLimit) ? q.timeLimit : 20,
+        answerType: isMultiple ? "multiple" : "single",
+      };
+    });
 };
 
 export function useQuizAI({ setTitle, setQuestions, setActiveIndex }) {
@@ -153,15 +165,9 @@ export function useQuizAI({ setTitle, setQuestions, setActiveIndex }) {
 
     const systemPrompt = `
 Eres un generador de quizzes educativos extremadamente preciso.
-Cuando el tema sea de cultura pop, películas, series, videojuegos, cómics o cualquier franquicia conocida,
-debes asegurarte de que las respuestas correctas sean 100% verídicas según el canon oficial.
+Responde ÚNICAMENTE con JSON válido, sin texto adicional, sin bloques de código.
 
-Ejemplos de datos que debes conocer con precisión:
-- Las Piedras del Infinito en Marvel: Espacio=azul, Mente=amarilla, Realidad=roja, Poder=morada, Alma=naranja, Tiempo=verde
-- No inventes ni confundas colores, nombres, fechas o datos canónicos
-
-Responde ÚNICAMENTE con JSON válido, sin texto adicional, sin bloques de código, sin explicaciones.
-El formato debe ser exactamente este:
+Formato exacto:
 {
   "title": "título del quiz",
   "questions": [
@@ -174,16 +180,18 @@ El formato debe ser exactamente este:
     }
   ]
 }
-Reglas:
+
+Reglas ESTRICTAS:
 - Genera entre 4 y 6 preguntas
-- "correct" es el índice (0-3) de la respuesta correcta
-- "answerType" puede ser "single" o "multiple"
-- Si es "multiple", "correct" es un array de índices: [0, 2]
+- Cada pregunta debe tener EXACTAMENTE 4 respuestas, ni más ni menos
+- Para "single": "correct" es un número (0, 1, 2 o 3)
+- Para "multiple": "correct" es un array de índices ej: [0, 2] — mínimo 2 correctas
 - Las respuestas deben ser cortas (máximo 6 palabras)
 - Varía los tiempos entre 15, 20 y 30 segundos
 - Responde siempre en el mismo idioma del tema
-- Verifica dos veces que cada "correct" apunta al índice correcto antes de responder
-- IMPORTANTE: asegúrate de que el JSON esté completo y cerrado correctamente
+- Verifica que "correct" apunta a índices válidos (0-3)
+- El JSON debe estar completo y bien cerrado
+- Para cultura pop, películas, series: verifica que los datos sean 100% canónicos
 `;
 
     try {
@@ -220,7 +228,7 @@ Reglas:
       const mapped = await Promise.all(
         validQuestions.map(async (q) => ({
           ...q,
-          image: await fetchImage(q.question),
+          image: await fetchImage(q.text),
         })),
       );
 
