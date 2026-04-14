@@ -37,14 +37,14 @@ const simplifyImageQuery = async (question) => {
 const fetchWikipediaImage = async (query) => {
   try {
     const searchRes = await fetch(
-      `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&origin=*&srlimit=1`
+      `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&origin=*&srlimit=1`,
     );
     const searchData = await searchRes.json();
     const title = searchData?.query?.search?.[0]?.title;
     if (!title) return null;
 
     const imgRes = await fetch(
-      `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=pageimages&format=json&origin=*&pithumbsize=600`
+      `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=pageimages&format=json&origin=*&pithumbsize=600`,
     );
     const imgData = await imgRes.json();
     const pages = imgData?.query?.pages;
@@ -55,19 +55,41 @@ const fetchWikipediaImage = async (query) => {
   }
 };
 
+const searchUnsplash = async (query) => {
+  try {
+    const res = await fetch(
+      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape`,
+      { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` } },
+    );
+    const data = await res.json();
+    return data.results?.[0]?.urls?.regular ?? null;
+  } catch {
+    return null;
+  }
+};
+
 export const fetchImage = async (question) => {
   try {
     const query = await simplifyImageQuery(question);
 
-    const unsplashRes = await fetch(
-      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape`,
-      { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` } }
-    );
-    const unsplashData = await unsplashRes.json();
-    const unsplashUrl = unsplashData.results?.[0]?.urls?.regular ?? null;
-    if (unsplashUrl) return unsplashUrl;
+    const byKeywords = await searchUnsplash(query);
+    if (byKeywords) return byKeywords;
 
-    return await fetchWikipediaImage(query);
+    const byQuestion = await searchUnsplash(question);
+    if (byQuestion) return byQuestion;
+
+    const wikiByKeywords = await fetchWikipediaImage(query);
+    if (wikiByKeywords) return wikiByKeywords;
+
+    const wikiByQuestion = await fetchWikipediaImage(question);
+    if (wikiByQuestion) return wikiByQuestion;
+
+    const genericRes = await fetch(
+      `https://api.unsplash.com/photos/random?query=education&orientation=landscape`,
+      { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` } },
+    );
+    const genericData = await genericRes.json();
+    return genericData?.urls?.regular ?? null;
   } catch {
     return null;
   }
@@ -84,7 +106,7 @@ const extractJSON = (raw) => {
 
   try {
     return JSON.parse(clean);
-  } catch (_) {
+  } catch {
     const lastCompleteQuestion = clean.lastIndexOf("},\n    {");
     if (lastCompleteQuestion !== -1) {
       const truncated = clean.slice(0, lastCompleteQuestion + 1) + "\n  ]\n}";
@@ -95,17 +117,21 @@ const extractJSON = (raw) => {
 };
 
 const validateQuiz = (parsed) => {
-  if (!parsed || typeof parsed !== "object") throw new Error("Response is not an object");
-  if (typeof parsed.title !== "string" || !parsed.title.trim()) throw new Error("Missing title");
-  if (!Array.isArray(parsed.questions) || parsed.questions.length === 0) throw new Error("No questions array");
+  if (!parsed || typeof parsed !== "object")
+    throw new Error("Response is not an object");
+  if (typeof parsed.title !== "string" || !parsed.title.trim())
+    throw new Error("Missing title");
+  if (!Array.isArray(parsed.questions) || parsed.questions.length === 0)
+    throw new Error("No questions array");
 
   return parsed.questions
-    .filter((q) => (
-      typeof q.question === "string" &&
-      Array.isArray(q.answers) &&
-      q.answers.length >= 2 &&
-      (typeof q.correct === "number" || Array.isArray(q.correct))
-    ))
+    .filter(
+      (q) =>
+        typeof q.question === "string" &&
+        Array.isArray(q.answers) &&
+        q.answers.length >= 2 &&
+        (typeof q.correct === "number" || Array.isArray(q.correct)),
+    )
     .map((q) => ({
       question: q.question,
       answers: q.answers,
@@ -125,7 +151,14 @@ export function useQuizAI({ setTitle, setQuestions, setActiveIndex }) {
     setError("");
 
     const systemPrompt = `
-Eres un generador de quizzes educativos. El usuario te dará un tema y debes generar un quiz.
+Eres un generador de quizzes educativos extremadamente preciso.
+Cuando el tema sea de cultura pop, películas, series, videojuegos, cómics o cualquier franquicia conocida,
+debes asegurarte de que las respuestas correctas sean 100% verídicas según el canon oficial.
+
+Ejemplos de datos que debes conocer con precisión:
+- Las Piedras del Infinito en Marvel: Espacio=azul, Mente=amarilla, Realidad=roja, Poder=morada, Alma=naranja, Tiempo=verde
+- No inventes ni confundas colores, nombres, fechas o datos canónicos
+
 Responde ÚNICAMENTE con JSON válido, sin texto adicional, sin bloques de código, sin explicaciones.
 El formato debe ser exactamente este:
 {
@@ -148,6 +181,7 @@ Reglas:
 - Las respuestas deben ser cortas (máximo 6 palabras)
 - Varía los tiempos entre 15, 20 y 30 segundos
 - Responde siempre en el mismo idioma del tema
+- Verifica dos veces que cada "correct" apunta al índice correcto antes de responder
 - IMPORTANTE: asegúrate de que el JSON esté completo y cerrado correctamente
 `;
 
@@ -179,15 +213,14 @@ Reglas:
       const parsed = extractJSON(raw);
       const validQuestions = validateQuiz(parsed);
 
-      if (validQuestions.length === 0) {
+      if (validQuestions.length === 0)
         throw new Error("No se generaron preguntas válidas");
-      }
 
       const mapped = await Promise.all(
         validQuestions.map(async (q) => ({
           ...q,
           image: await fetchImage(q.question),
-        }))
+        })),
       );
 
       setTitle(parsed.title);
