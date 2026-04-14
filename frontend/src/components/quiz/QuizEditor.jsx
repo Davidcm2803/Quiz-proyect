@@ -1,13 +1,14 @@
 import QuestionPlaceholder from "./Questionplaceholder";
 import ImageUploader from "./Imageuploader";
 import AnswerGrid from "./Answergrid";
+import classroom from "../../assets/classroom.png";
 
 export default function QuizEditor({ question, onUpdate }) {
   return (
     <div
       className="flex-1 overflow-y-auto flex flex-col"
       style={{
-        backgroundImage: "url('/src/assets/classroom.png')",
+        backgroundImage: `url(${classroom})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
