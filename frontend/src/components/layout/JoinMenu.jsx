@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import GamePin from "../ui/Gamepin";
+import GamePin from "../ui/GamePin";
 import FloatingDecorations from "../ui/FloatingDecorations";
 import logo from "../../assets/logo.png";
 import config from "../../config";
