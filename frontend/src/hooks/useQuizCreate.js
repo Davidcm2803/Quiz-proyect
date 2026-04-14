@@ -1,238 +1,201 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import {
+  createQuestion,
+  createAnswer,
+  createQuiz,
+  updateQuizQuestions,
+  getQuizFull,
+  updateQuizInfo,
+} from "../database/database.js";
 import config from "../config";
 
-const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_API_KEY = config.GROQ_KEY;
-const UNSPLASH_KEY = config.UNSPLASH_KEY;
-const MODEL = "llama-3.1-8b-instant";
+const API_URL = config.API_URL;
 
-const simplifyImageQuery = async (question) => {
-  try {
-    const res = await fetch(GROQ_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${GROQ_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          {
-            role: "system",
-            content:
-              "Extract 1-3 key visual nouns in English from the question for an image search. Reply with only the keywords, no punctuation, no explanation.",
-          },
-          { role: "user", content: question },
-        ],
-        temperature: 0,
-        max_tokens: 20,
-      }),
-    });
-    const data = await res.json();
-    return data.choices[0].message.content.trim();
-  } catch {
-    return question;
-  }
-};
+const emptyQuestion = () => ({
+  question: "",
+  image: null,
+  answers: ["", "", "", ""],
+  correct: 0,
+  timeLimit: 20,
+  answerType: "single",
+});
 
-const fetchWikipediaImage = async (query) => {
-  try {
-    const searchRes = await fetch(
-      `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&origin=*&srlimit=1`,
+const mapQuestion = (q) => ({
+  id: q.id,
+  question: q.text,
+  image: q.image ?? null,
+  answers: q.answers.map((a) => a.text),
+  correct: (() => {
+    const correct = q.answers
+      .map((a, i) => (a.is_correct ? i : null))
+      .filter((i) => i !== null);
+    return correct.length === 1 ? correct[0] : correct;
+  })(),
+  timeLimit: q.time ?? 20,
+  answerType: q.answerType ?? "single",
+});
+
+export function useQuizCreate(quizId = null) {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [title, setTitle] = useState("Quiz title");
+  const [questions, setQuestions] = useState([emptyQuestion()]);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(!!quizId);
+  const [quizPin, setQuizPin] = useState(null);
+  const [mode, setMode] = useState("normal");
+  const [scheduledAt, setScheduledAt] = useState(null);
+
+  const isEditing = !!quizId;
+
+  useEffect(() => {
+    if (!quizId) return;
+    getQuizFull(quizId)
+      .then((data) => {
+        setTitle(data.title);
+        setQuestions(data.questions.map(mapQuestion));
+        setQuizPin(data.pin);
+        setMode(data.mode || "normal");
+        setScheduledAt(data.scheduled_at || null);
+      })
+      .catch(() => alert("Error cargando el quiz"))
+      .finally(() => setLoading(false));
+  }, [quizId]);
+
+  const active = questions[activeIndex] || emptyQuestion();
+
+  const updateActive = (field, value) =>
+    setQuestions((prev) =>
+      prev.map((q, i) => (i === activeIndex ? { ...q, [field]: value } : q))
     );
-    const searchData = await searchRes.json();
-    const title = searchData?.query?.search?.[0]?.title;
-    if (!title) return null;
 
-    const imgRes = await fetch(
-      `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=pageimages&format=json&origin=*&pithumbsize=600`,
-    );
-    const imgData = await imgRes.json();
-    const pages = imgData?.query?.pages;
-    const page = pages?.[Object.keys(pages)[0]];
-    return page?.thumbnail?.source ?? null;
-  } catch {
-    return null;
-  }
-};
+  const addQuestion = () => {
+    setQuestions((prev) => [...prev, emptyQuestion()]);
+    setActiveIndex(questions.length);
+  };
 
-const searchUnsplash = async (query) => {
-  try {
-    const res = await fetch(
-      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape`,
-      { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` } },
-    );
-    const data = await res.json();
-    return data.results?.[0]?.urls?.regular ?? null;
-  } catch {
-    return null;
-  }
-};
+  const deleteQuestion = (index) => {
+    if (questions.length <= 1) return;
+    const updated = questions.filter((_, i) => i !== index);
+    setQuestions(updated);
+    setActiveIndex(Math.min(activeIndex, updated.length - 1));
+  };
 
-export const fetchImage = async (question) => {
-  try {
-    const query = await simplifyImageQuery(question);
-
-    const byKeywords = await searchUnsplash(query);
-    if (byKeywords) return byKeywords;
-
-    const byQuestion = await searchUnsplash(question);
-    if (byQuestion) return byQuestion;
-
-    const wikiByKeywords = await fetchWikipediaImage(query);
-    if (wikiByKeywords) return wikiByKeywords;
-
-    const wikiByQuestion = await fetchWikipediaImage(question);
-    if (wikiByQuestion) return wikiByQuestion;
-
-    const genericRes = await fetch(
-      `https://api.unsplash.com/photos/random?query=education&orientation=landscape`,
-      { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` } },
-    );
-    const genericData = await genericRes.json();
-    return genericData?.urls?.regular ?? null;
-  } catch {
-    return null;
-  }
-};
-
-const extractJSON = (raw) => {
-  let clean = raw.replace(/```json|```/gi, "").trim();
-  const start = clean.indexOf("{");
-  const end = clean.lastIndexOf("}");
-  if (start === -1 || end === -1 || end <= start) {
-    throw new Error("No JSON object found in response");
-  }
-  clean = clean.slice(start, end + 1);
-
-  try {
-    return JSON.parse(clean);
-  } catch {
-    const lastCompleteQuestion = clean.lastIndexOf("},\n    {");
-    if (lastCompleteQuestion !== -1) {
-      const truncated = clean.slice(0, lastCompleteQuestion + 1) + "\n  ]\n}";
-      return JSON.parse(truncated);
+  const validate = () => {
+    if (!title.trim() || title.trim() === "Quiz title") {
+      alert("El quiz debe tener un título."); return false;
     }
-    throw new Error("Could not recover valid JSON from response");
-  }
-};
-
-const validateQuiz = (parsed) => {
-  if (!parsed || typeof parsed !== "object")
-    throw new Error("Response is not an object");
-  if (typeof parsed.title !== "string" || !parsed.title.trim())
-    throw new Error("Missing title");
-  if (!Array.isArray(parsed.questions) || parsed.questions.length === 0)
-    throw new Error("No questions array");
-
-  return parsed.questions.filter(
-    (q) =>
-      typeof q.question === "string" &&
-      Array.isArray(q.answers) &&
-      q.answers.length === 4 &&
-      (typeof q.correct === "number" || Array.isArray(q.correct)),
-  );
-};
-
-export function useQuizAI({ setTitle, setQuestions, setActiveIndex }) {
-  const [generating, setGenerating] = useState(false);
-  const [error, setError] = useState("");
-
-  const generateQuiz = async (prompt) => {
-    if (!prompt.trim()) return;
-    setGenerating(true);
-    setError("");
-
-    const systemPrompt = `
-Eres un generador de quizzes educativos extremadamente preciso.
-Responde ÚNICAMENTE con JSON válido, sin texto adicional, sin bloques de código.
-
-Formato exacto:
-{
-  "title": "título del quiz",
-  "questions": [
-    {
-      "question": "texto de la pregunta",
-      "answerType": "single",
-      "timeLimit": 20,
-      "answers": ["opción A", "opción B", "opción C", "opción D"],
-      "correct": 0
+    for (let i = 0; i < questions.length; i++) {
+      const q = questions[i];
+      if (!q.question.trim()) {
+        alert(`La pregunta ${i + 1} no tiene texto.`); setActiveIndex(i); return false;
+      }
+      for (let j = 0; j < q.answers.length; j++) {
+        if (!q.answers[j].trim()) {
+          alert(`La pregunta ${i + 1} tiene respuestas vacías.`); setActiveIndex(i); return false;
+        }
+      }
     }
-  ]
-}
+    return true;
+  };
 
-Reglas ESTRICTAS:
-- Genera entre 4 y 6 preguntas
-- Cada pregunta debe tener EXACTAMENTE 4 respuestas, ni más ni menos
-- Para "single": "correct" es un número (0, 1, 2 o 3)
-- Para "multiple": "correct" es un array de índices ej: [0, 2] — mínimo 2 correctas
-- Las respuestas deben ser cortas (máximo 6 palabras)
-- Varía los tiempos entre 15, 20 y 30 segundos
-- Responde siempre en el mismo idioma del tema
-- Verifica que "correct" apunta a índices válidos (0-3)
-- El JSON debe estar completo y bien cerrado
-- Para cultura pop, películas, series: verifica que los datos sean 100% canónicos
-`;
+  const saveQuiz = async () => {
+    if (!validate()) return;
+    if (!user?.id) { alert("Debes iniciar sesión para guardar."); return; }
+    if (!window.confirm(isEditing ? "¿Guardar cambios?" : "¿Deseas guardar este quiz?")) return;
 
+    setSaving(true);
     try {
-      const res = await fetch(GROQ_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${GROQ_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: `Tema: ${prompt}` },
-          ],
-          temperature: 0.5,
-          max_tokens: 2048,
-        }),
-      });
+      let quizIdToUse = quizId;
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error?.message || "Error al llamar a Groq");
+      if (isEditing) {
+        await updateQuizInfo(quizId, {
+          title: title.trim(),
+          image: questions[0]?.image ?? null,
+        });
+
+        await updateQuizQuestions(quizId, [], {
+          mode,
+          scheduled_at: scheduledAt ?? null,
+        });
+
+        const res = await fetch(`${API_URL}/questions/by-quiz/${quizId}`, {
+          method: "DELETE",
+        });
+        if (!res.ok) throw new Error("Failed to delete questions");
+      } else {
+        const { id, pin: newPin } = await createQuiz({
+          title: title.trim(),
+          description: "",
+          creator: user.id,
+          image: questions[0]?.image ?? null,
+          mode,
+          scheduled_at: scheduledAt ?? null,
+        });
+        quizIdToUse = id;
+        window._savedPin = newPin;
       }
 
-      const data = await res.json();
-      const raw = data.choices[0].message.content.trim();
-      const parsed = extractJSON(raw);
-      const validQuestions = validateQuiz(parsed);
+      const questionIds = [];
+      for (const q of questions) {
+        const { id: questionId } = await createQuestion({
+          quiz: quizIdToUse,
+          text: q.question,
+          image: q.image ?? null,
+          points: 900,
+          time: q.timeLimit,
+          answerType: q.answerType,
+        });
+        questionIds.push(questionId);
 
-      if (validQuestions.length === 0)
-        throw new Error("No se generaron preguntas válidas");
+        for (let i = 0; i < q.answers.length; i++) {
+          await createAnswer({
+            questionId,
+            text: q.answers[i],
+            is_correct: Boolean(
+              Array.isArray(q.correct) ? q.correct.includes(i) : q.correct === i
+            ),
+          });
+        }
+      }
 
-      const mapped = await Promise.all(
-        validQuestions.map(async (q) => ({
-          question: q.question,
-          image: await fetchImage(q.question),
-          answers: q.answers.map((a) => typeof a === "string" ? a : a.text),
-          correct: (() => {
-            const correctIndexes = Array.isArray(q.correct)
-              ? q.correct
-              : [q.correct];
-            return correctIndexes.length === 1 ? correctIndexes[0] : correctIndexes;
-          })(),
-          timeLimit: [15, 20, 30].includes(q.timeLimit) ? q.timeLimit : 20,
-          answerType: q.answerType === "multiple" ? "multiple" : "single",
-        })),
-      );
+      await updateQuizQuestions(quizIdToUse, questionIds, {
+        mode,
+        scheduled_at: scheduledAt ?? null,
+      });
 
-      setTitle(parsed.title);
-      setQuestions(mapped);
-      setActiveIndex(0);
-      return true;
-    } catch (e) {
-      console.error("Error generando quiz:", e);
-      setError("No se pudo generar el quiz. Intenta de nuevo.");
-      return false;
+      if (isEditing) {
+        const goHost = window.confirm(
+          `Quiz actualizado! Código de sala: ${quizPin}\n\n¿Iniciar el quiz ahora como host?`
+        );
+        navigate(goHost ? `/host/${quizPin}` : "/admin/library");
+      } else {
+        const pin = window._savedPin;
+        delete window._savedPin;
+        const goHost = window.confirm(
+          `Quiz guardado! Código de sala: ${pin}\n\n¿Iniciar el quiz ahora como host?`
+        );
+        navigate(goHost ? `/host/${pin}` : "/");
+      }
+    } catch (error) {
+      console.error("Error saving quiz:", error);
+      alert("Error al guardar. Verifica que el servidor esté corriendo.");
     } finally {
-      setGenerating(false);
+      setSaving(false);
     }
   };
 
-  return { generateQuiz, generating, error };
+  return {
+    title, setTitle,
+    questions, setQuestions,
+    active, activeIndex, setActiveIndex,
+    saving, loading, isEditing,
+    quizPin,
+    mode, setMode,
+    scheduledAt, setScheduledAt,
+    updateActive, addQuestion, deleteQuestion, saveQuiz,
+  };
 }

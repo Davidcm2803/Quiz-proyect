@@ -110,8 +110,7 @@ const extractJSON = (raw) => {
   } catch {
     const lastCompleteQuestion = clean.lastIndexOf("},\n    {");
     if (lastCompleteQuestion !== -1) {
-      const truncated =
-        clean.slice(0, lastCompleteQuestion + 1) + "\n  ]\n}";
+      const truncated = clean.slice(0, lastCompleteQuestion + 1) + "\n  ]\n}";
       return JSON.parse(truncated);
     }
     throw new Error("Could not recover valid JSON from response");
@@ -126,32 +125,13 @@ const validateQuiz = (parsed) => {
   if (!Array.isArray(parsed.questions) || parsed.questions.length === 0)
     throw new Error("No questions array");
 
-  return parsed.questions
-    .filter(
-      (q) =>
-        typeof q.question === "string" &&
-        Array.isArray(q.answers) &&
-        q.answers.length === 4 &&
-        (typeof q.correct === "number" || Array.isArray(q.correct)),
-    )
-    .map((q) => {
-      const isMultiple = q.answerType === "multiple";
-      const correctIndexes = isMultiple
-        ? Array.isArray(q.correct)
-          ? q.correct
-          : [q.correct]
-        : [q.correct];
-
-      return {
-        text: q.question,
-        answers: q.answers.map((a, i) => ({
-          text: typeof a === "string" ? a : a.text,
-          correct: correctIndexes.includes(i),
-        })),
-        time: [15, 20, 30].includes(q.timeLimit) ? q.timeLimit : 20,
-        answerType: isMultiple ? "multiple" : "single",
-      };
-    });
+  return parsed.questions.filter(
+    (q) =>
+      typeof q.question === "string" &&
+      Array.isArray(q.answers) &&
+      q.answers.length === 4 &&
+      (typeof q.correct === "number" || Array.isArray(q.correct)),
+  );
 };
 
 export function useQuizAI({ setTitle, setQuestions, setActiveIndex }) {
@@ -227,8 +207,15 @@ Reglas ESTRICTAS:
 
       const mapped = await Promise.all(
         validQuestions.map(async (q) => ({
-          ...q,
-          image: await fetchImage(q.text),
+          question: q.question,
+          image: await fetchImage(q.question),
+          answers: q.answers.map((a) => typeof a === "string" ? a : a.text),
+          correct: (() => {
+            const indexes = Array.isArray(q.correct) ? q.correct : [q.correct];
+            return indexes.length === 1 ? indexes[0] : indexes;
+          })(),
+          timeLimit: [15, 20, 30].includes(q.timeLimit) ? q.timeLimit : 20,
+          answerType: q.answerType === "multiple" ? "multiple" : "single",
         })),
       );
 
