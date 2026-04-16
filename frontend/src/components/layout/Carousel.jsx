@@ -18,7 +18,7 @@ const TOOLS = [
   {
     id: 1,
     bgColor: "#ef4444",
-    icon: <Plus size={22} strokeWidth={2.5} color="white" />,
+    icon: <Plus size={20} strokeWidth={2.5} color="white" />,
     title: "Create content from scratch",
     buttonLabel: "Create",
     path: "/quiz/create",
@@ -26,7 +26,7 @@ const TOOLS = [
   {
     id: 2,
     bgColor: "#16a34a",
-    icon: <Sparkles size={22} strokeWidth={2} color="white" />,
+    icon: <Sparkles size={20} strokeWidth={2} color="white" />,
     title: "Save time! Create kahoots with AI",
     buttonLabel: "Start creating",
     path: "/quiz/ai",
@@ -34,15 +34,15 @@ const TOOLS = [
   {
     id: 3,
     bgColor: "#db2777",
-    icon: <FileText size={22} strokeWidth={2} color="white" />,
-    title: "Generate a kahoot from your PDF file in one click",
+    icon: <FileText size={20} strokeWidth={2} color="white" />,
+    title: "Generate a kahoot from your PDF file",
     buttonLabel: "Create",
-    path: "/quiz/pdf", 
+    path: "/quiz/pdf",
   },
   {
     id: 4,
     bgColor: "#7c3aed",
-    icon: <LayoutGrid size={22} strokeWidth={2} color="white" />,
+    icon: <LayoutGrid size={20} strokeWidth={2} color="white" />,
     title: "Organize your content with smart layouts",
     buttonLabel: "Explore",
     path: null,
@@ -50,7 +50,7 @@ const TOOLS = [
   {
     id: 5,
     bgColor: "#0891b2",
-    icon: <Lightbulb size={22} strokeWidth={2} color="white" />,
+    icon: <Lightbulb size={20} strokeWidth={2} color="white" />,
     title: "Get inspired with ready-made templates",
     buttonLabel: "Browse",
     path: null,
@@ -58,7 +58,7 @@ const TOOLS = [
   {
     id: 6,
     bgColor: "#ea580c",
-    icon: <BookOpen size={22} strokeWidth={2} color="white" />,
+    icon: <BookOpen size={20} strokeWidth={2} color="white" />,
     title: "Learn best practices from our guide library",
     buttonLabel: "Read",
     path: null,
@@ -71,23 +71,22 @@ function ToolCard({ bgColor, icon, title, buttonLabel, path }) {
   return (
     <div
       style={{ backgroundColor: bgColor }}
-      className="rounded-xl p-4 h-40 flex flex-col justify-between shadow-md w-full cursor-pointer"
+      className="rounded-2xl p-3 sm:p-4 min-h-[120px] sm:h-40 flex flex-col justify-between w-full cursor-pointer"
     >
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-2">
         <div
-          className="rounded-full w-9 h-9 flex items-center justify-center flex-shrink-0"
+          className="rounded-full w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center flex-shrink-0"
           style={{ backgroundColor: "rgba(255,255,255,0.25)" }}
         >
           {icon}
         </div>
-        <p className="text-white font-semibold text-m leading-snug">{title}</p>
+        <p className="text-white font-semibold text-xs sm:text-sm leading-snug">{title}</p>
       </div>
-
-      <div className="flex justify-end">
+      <div className="flex justify-start mt-2">
         <Button
           variant="secondary"
-          size="m"
-          className="rounded-full px-6 py-2 text-base shadow-md hover:shadow-lg"
+          size="sm"
+          className="rounded-full px-4 py-1.5 text-xs sm:text-sm font-semibold"
           onClick={() => path && navigate(path)}
         >
           {buttonLabel}
@@ -97,10 +96,10 @@ function ToolCard({ bgColor, icon, title, buttonLabel, path }) {
   );
 }
 
-const GAP = 20;
+const GAP = 12;
 
 function getVisible(width) {
-  if (width < 640) return 1;
+  if (width < 640) return 2;
   if (width < 1024) return 2;
   return 3;
 }
@@ -151,14 +150,14 @@ export default function Carousel() {
   const offset = current * (cardWidth + GAP);
 
   return (
-    <section className="py-6 w-full relative">
-      <h2 className="text-2xl font-black text-gray-900 mb-4 text-left ml-14">
+    <section className="py-4 sm:py-6 w-full relative">
+      <h2 className="text-xl sm:text-2xl font-black text-gray-900 mb-4 text-left">
         Quick tools to get started
       </h2>
 
-      <div className="flex items-center gap-4 mb-0">
+      <div className="flex items-center gap-2 sm:gap-4">
         <CarouselArrow onClick={prev}>
-          <ChevronLeft size={18} strokeWidth={2.5} />
+          <ChevronLeft size={16} strokeWidth={2.5} />
         </CarouselArrow>
 
         <div
@@ -184,8 +183,20 @@ export default function Carousel() {
         </div>
 
         <CarouselArrow onClick={next}>
-          <ChevronRight size={18} strokeWidth={2.5} />
+          <ChevronRight size={16} strokeWidth={2.5} />
         </CarouselArrow>
+      </div>
+
+      <div className="flex justify-center gap-1.5 mt-3">
+        {Array.from({ length: maxIndex + 1 }).map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setCurrent(i)}
+            className={`h-1.5 rounded-full transition-all duration-300 ${
+              i === current ? "w-4 bg-gray-700" : "w-1.5 bg-gray-300"
+            }`}
+          />
+        ))}
       </div>
     </section>
   );
