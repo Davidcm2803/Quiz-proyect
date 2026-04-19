@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { ChevronDown, Plus, Sparkles } from "lucide-react";
 
 const CREATE_ITEMS = [
-  { id: 1, bgColor: "#ef4444", Icon: Plus,     label: "Crear desde cero", path: "/quiz/create" },
-  { id: 2, bgColor: "#16a34a", Icon: Sparkles, label: "Crear con IA",     path: "/quiz/ai" },
+  { id: 1, bgColor: "#e8678f", Icon: Plus,     label: "Crear desde cero", path: "/quiz/create" },
+  { id: 2, bgColor: "#00b64f", Icon: Sparkles, label: "Crear con IA",     path: "/quiz/ai" },
 ];
 
 export default function CreateDropdown() {

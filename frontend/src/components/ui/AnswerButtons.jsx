@@ -1,8 +1,8 @@
 const COLORS = [
-  { bg: "bg-[#e21b3c]", hover: "hover:bg-[#c41535]", icon: "▲" },
-  { bg: "bg-[#1368ce]", hover: "hover:bg-[#0f52a8]", icon: "◆" },
-  { bg: "bg-[#d89e00]", hover: "hover:bg-[#b58400]", icon: "●" },
-  { bg: "bg-[#26890c]", hover: "hover:bg-[#1e6e09]", icon: "■" },
+  { bg: "bg-[#e8678f]", hover: "hover:bg-[#df4071]", icon: "▲" },
+  { bg: "bg-[#00b64f]", hover: "hover:bg-[#009641]", icon: "◆" },
+  { bg: "bg-[#3d98d6]", hover: "hover:bg-[#2276af]", icon: "●" },
+  { bg: "bg-[#f93d3a]", hover: "hover:bg-[#f93d3a]", icon: "■" },
 ];
 
 export default function AnswerButtons({ answers, selected, onSelect, answerType }) {

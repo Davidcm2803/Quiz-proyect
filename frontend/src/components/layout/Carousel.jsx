@@ -17,7 +17,7 @@ import CarouselArrow from "../ui/CarouselArrow";
 const TOOLS = [
   {
     id: 1,
-    bgColor: "#ef4444",
+    bgColor: "#e8678f",
     icon: <Plus size={22} strokeWidth={2.5} color="white" />,
     title: "Create content from scratch",
     buttonLabel: "Create",
@@ -25,7 +25,7 @@ const TOOLS = [
   },
   {
     id: 2,
-    bgColor: "#16a34a",
+    bgColor: "#00b64f",
     icon: <Sparkles size={22} strokeWidth={2} color="white" />,
     title: "Save time! Create kahoots with AI",
     buttonLabel: "Start creating",
@@ -33,7 +33,7 @@ const TOOLS = [
   },
   {
     id: 3,
-    bgColor: "#db2777",
+    bgColor: "#f93d3a",
     icon: <FileText size={22} strokeWidth={2} color="white" />,
     title: "Generate a kahoot from your PDF file in one click",
     buttonLabel: "Create",
@@ -41,7 +41,7 @@ const TOOLS = [
   },
   {
     id: 4,
-    bgColor: "#7c3aed",
+    bgColor: "#f6d636",
     icon: <LayoutGrid size={22} strokeWidth={2} color="white" />,
     title: "Organize your content with smart layouts",
     buttonLabel: "Explore",
@@ -49,7 +49,7 @@ const TOOLS = [
   },
   {
     id: 5,
-    bgColor: "#0891b2",
+    bgColor: "#e8678f",
     icon: <Lightbulb size={22} strokeWidth={2} color="white" />,
     title: "Get inspired with ready-made templates",
     buttonLabel: "Browse",
@@ -57,7 +57,7 @@ const TOOLS = [
   },
   {
     id: 6,
-    bgColor: "#ea580c",
+    bgColor: "#3d98d6",
     icon: <BookOpen size={22} strokeWidth={2} color="white" />,
     title: "Learn best practices from our guide library",
     buttonLabel: "Read",
