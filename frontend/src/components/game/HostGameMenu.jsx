@@ -131,14 +131,13 @@ export default function HostGameMenu() {
 
   const send = (payload) => ws.current?.send(JSON.stringify(payload));
 
-  const startCountdown = (secs, onEnd) => {
+  const startCountdown = (secs) => {
     clearInterval(countdownRef.current);
     setCountdown(secs);
     countdownRef.current = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(countdownRef.current);
-          if (onEnd) onEnd();
           return 0;
         }
         return prev - 1;
@@ -191,6 +190,13 @@ export default function HostGameMenu() {
       return;
     }
     launchQuestion(next, quizQuestions);
+  };
+
+  const goToScores = () => {
+    broadcastScores();
+    setPhase("scores");
+    setShowingScores(false);
+    clearInterval(countdownRef.current);
   };
 
   const formatTime = (ms) => {
@@ -356,10 +362,7 @@ export default function HostGameMenu() {
             <ScoreBoard scores={scores} />
             <div className="flex gap-4">
               <Button variant="secondary" onClick={() => setShowingScores(false)}>← Volver</Button>
-              <Button variant="save" onClick={broadcastScores}>Mostrar scores a todos</Button>
-              <Button variant="save" onClick={nextQuestion}>
-                {qIndex + 1 >= quizQuestions.length ? "Finalizar" : "Siguiente →"}
-              </Button>
+              <Button variant="save" onClick={goToScores}>Mostrar scores a todos</Button>
             </div>
           </div>
         ) : (
@@ -374,13 +377,23 @@ export default function HostGameMenu() {
             </div>
             <div className="flex gap-4">
               <Button variant="secondary" onClick={() => setShowingScores(true)}>Ver scores</Button>
-              <Button variant="save" onClick={nextQuestion}>
+              <Button variant="save" onClick={goToScores}>
                 {qIndex + 1 >= quizQuestions.length ? "Finalizar" : "Siguiente →"}
               </Button>
             </div>
           </>
         )}
       </div>
+    </div>
+  );
+
+  if (phase === "scores") return (
+    <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center gap-6 px-4">
+      <h2 className="text-white text-4xl font-black">Ranking</h2>
+      <ScoreBoard scores={scores} />
+      <Button variant="save" size="lg" onClick={nextQuestion}>
+        {qIndex + 1 >= quizQuestions.length ? "Finalizar quiz" : "Siguiente pregunta →"}
+      </Button>
     </div>
   );
 
