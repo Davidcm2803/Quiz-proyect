@@ -1,99 +1,69 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from app.utils.ws_manager import WSManager
-from app.db import rankings
-from bson import ObjectId
-from datetime import datetime
-import json
+# app/utils/ws_manager.py
 
-router = APIRouter()
-manager = WSManager()
+from fastapi import WebSocket
+from typing import Dict
 
 
-@router.websocket("/ws/{room_id}/{player_id}")
-async def websocket_endpoint(websocket: WebSocket, room_id: str, player_id: str):
-    await manager.connect(room_id, player_id, websocket)
+class QuizRoom:
+    def __init__(self):
+        self.connections: Dict[str, WebSocket] = {}
+        self.scores: Dict[str, int] = {}
+        self.answers_submitted: Dict[str, set] = {}  # question_id -> set(player_ids)
 
-    try:
-        while True:
-            data = await websocket.receive_text()
-            data = json.loads(data)
-            event = data.get("event")
 
-            if event == "joinRoom":
-                await manager.broadcast(room_id, {
-                    "event": "playerJoined",
-                    "playerId": player_id
-                })
+class WSManager:
+    def __init__(self):
+        self.rooms: Dict[str, QuizRoom] = {}
 
-            elif event == "startQuiz":
-                await manager.broadcast(room_id, {
-                    "event": "quizStarted"
-                })
+    async def connect(self, room_id: str, player_id: str, websocket: WebSocket):
+        await websocket.accept()
 
-            elif event == "newQuestion":
-                question = data.get("question")
-                await manager.broadcast(room_id, {
-                    "event": "newQuestion",
-                    "question": question
-                })
+        if room_id not in self.rooms:
+            self.rooms[room_id] = QuizRoom()
 
-            elif event == "submitAnswer":
-                question_id = data.get("questionId")
-                answer = data.get("answer")
-                points = data.get("points", 0)
+        room = self.rooms[room_id]
+        room.connections[player_id] = websocket
 
-                if manager.has_answered(room_id, question_id, player_id):
-                    await websocket.send_json({
-                        "event": "error",
-                        "message": "Duplicate answer not allowed"
-                    })
-                    continue
+        if player_id not in room.scores:
+            room.scores[player_id] = 0
 
-                if points > 0:
-                    manager.update_score(room_id, player_id, points)
+        print(f"[CONNECT] {player_id} joined {room_id}")
 
-                await manager.broadcast(room_id, {
-                    "event": "answerSubmitted",
-                    "playerId": player_id
-                })
+    def disconnect(self, room_id: str, player_id: str):
+        room = self.rooms.get(room_id)
+        if not room:
+            return
 
-                room = manager.rooms.get(room_id)
-                if room:
-                    await manager.broadcast(room_id, {
-                        "event": "scoreUpdate",
-                        "scores": room.scores
-                    })
+        room.connections.pop(player_id, None)
+        room.scores.pop(player_id, None)
 
-            elif event == "updateScore":
-                room = manager.rooms.get(room_id)
-                scores = room.scores if room else {}
-                await manager.broadcast(room_id, {
-                    "event": "scoreUpdate",
-                    "scores": scores
-                })
+        print(f"[DISCONNECT] {player_id} left {room_id}")
 
-            elif event == "endQuiz":
-                room = manager.rooms.get(room_id)
-                if room:
-                    sorted_scores = sorted(
-                        [(pid, score) for pid, score in room.scores.items() if pid != "host"],
-                        key=lambda x: x[1],
-                        reverse=True
-                    )
-                    for position, (pid, score) in enumerate(sorted_scores, start=1):
-                        rankings.insert_one({
-                            "_id": ObjectId(),
-                            "session": room_id,
-                            "player": pid,
-                            "position": position,
-                            "final_score": score,
-                            "date": datetime.utcnow(),
-                        })
+    async def broadcast(self, room_id: str, message: dict):
+        room = self.rooms.get(room_id)
+        if not room:
+            return
 
-                    await manager.broadcast(room_id, {
-                        "event": "quizEnded",
-                        "scores": dict(sorted_scores)
-                    })
+        for connection in room.connections.values():
+            await connection.send_json(message)
 
-    except WebSocketDisconnect:
-        manager.disconnect(room_id, player_id)
+    def has_answered(self, room_id: str, question_id: str, player_id: str) -> bool:
+        room = self.rooms.get(room_id)
+        if not room:
+            return False
+
+        if question_id not in room.answers_submitted:
+            room.answers_submitted[question_id] = set()
+
+        if player_id in room.answers_submitted[question_id]:
+            return True
+
+        room.answers_submitted[question_id].add(player_id)
+        return False
+
+    def update_score(self, room_id: str, player_id: str, points: int):
+        room = self.rooms.get(room_id)
+        if not room:
+            return
+
+        room.scores[player_id] += points
