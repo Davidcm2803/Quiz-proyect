@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import config from "../config";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
@@ -154,7 +154,6 @@ const generateQuizForCategory = async (slug) => {
   return { ...parsed, questions: questionsWithImages };
 };
 
-
 const getTodayKey = () => new Date().toISOString().slice(0, 10);
 const getCacheKey = (slug) => `quiz_${slug}_${getTodayKey()}`;
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
@@ -198,7 +197,6 @@ export const loadOrGenerateDailyQuizzes = async () => {
   return quizzes;
 };
 
-
 export function useQuizAI({ setTitle, setQuestions, setActiveIndex }) {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState(null);
@@ -227,8 +225,14 @@ export function useQuizAI({ setTitle, setQuestions, setActiveIndex }) {
       if (data.error) throw new Error(data.error.message);
       const raw = data.choices[0].message.content.trim();
       const parsed = extractJSON(raw);
+      const questionsWithImages = await Promise.all(
+        (parsed.questions ?? []).map(async (q) => ({
+          ...q,
+          image: await fetchImage(q.question),
+        }))
+      );
       setTitle(parsed.title ?? "Quiz IA");
-      setQuestions(parsed.questions ?? []);
+      setQuestions(questionsWithImages);
       setActiveIndex(0);
       return true;
     } catch {
