@@ -45,7 +45,7 @@ export default function PresentGameMenu() {
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    if (["waiting", "starting", "question", "ranking"].includes(phase)) {
+    if (["waiting", "starting", "question", "answered"].includes(phase)) {
       audio.play().catch(() => {});
     } else {
       audio.pause();
@@ -81,9 +81,6 @@ export default function PresentGameMenu() {
 
       if (data.event === "scoreUpdate") {
         setScores(data.scores);
-        setPhase((current) =>
-          current === "showAnswer" || current === "answered" ? current : "ranking"
-        );
       }
 
       if (data.event === "quizEnded") {
@@ -195,14 +192,6 @@ export default function PresentGameMenu() {
       )}
       <ScoreBoard scores={scores} currentPlayer={playerId} />
       <p className="text-white/40 text-sm mt-2">Esperando siguiente pregunta...</p>
-    </div>
-  );
-
-  if (phase === "ranking") return (
-    <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center gap-6 px-4">
-      <h2 className="text-white text-3xl font-black">Ranking</h2>
-      <ScoreBoard scores={scores} currentPlayer={playerId} />
-      <p className="text-white/40 text-sm">Cargando siguiente pregunta...</p>
     </div>
   );
 
