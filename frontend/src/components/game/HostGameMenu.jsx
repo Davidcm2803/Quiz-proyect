@@ -113,13 +113,10 @@ export default function HostGameMenu() {
         if (data.event === "playerJoined")
           setPlayers((prev) => prev.includes(data.playerId) ? prev : [...prev, data.playerId]);
         if (data.event === "answerSubmitted")
-          setAnswersIn((prev) => prev + 1);
-        if (data.event === "scoreUpdate") {
+  console.log("answerSubmitted recibido, answersIn:", answersIn + 1);
+  setAnswersIn((prev) => prev + 1);
+        if (data.event === "scoreUpdate")
           setScores(data.scores);
-          setPhase("scores");
-          setShowingScores(false);
-          clearInterval(countdownRef.current);
-        }
         if (data.event === "quizEnded") {
           setScores(data.scores);
           setPhase("finished");
@@ -135,14 +132,13 @@ export default function HostGameMenu() {
 
   const send = (payload) => ws.current?.send(JSON.stringify(payload));
 
-  const startCountdown = (secs, onEnd) => {
+  const startCountdown = (secs) => {
     clearInterval(countdownRef.current);
     setCountdown(secs);
     countdownRef.current = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(countdownRef.current);
-          if (onEnd) onEnd();
           return 0;
         }
         return prev - 1;
@@ -195,6 +191,13 @@ export default function HostGameMenu() {
       return;
     }
     launchQuestion(next, quizQuestions);
+  };
+
+  const goToScores = () => {
+    broadcastScores();
+    setPhase("scores");
+    setShowingScores(false);
+    clearInterval(countdownRef.current);
   };
 
   const formatTime = (ms) => {
@@ -250,7 +253,6 @@ export default function HostGameMenu() {
                   {modeInfo.icon} {modeInfo.label}
                 </span>
               </div>
-
               <div className="flex flex-col items-center gap-2 mt-6">
                 <QRCodeSVG
                   value={joinUrl}
@@ -262,7 +264,6 @@ export default function HostGameMenu() {
                 <p className="text-[#1a1a1a]/40 text-xs">Escanea para unirte</p>
               </div>
             </div>
-
             <div className="px-8 py-7">
               <div className="flex items-center justify-between mb-5">
                 <p className="text-gray-700 font-bold text-sm">Jugadores en sala</p>
@@ -288,9 +289,7 @@ export default function HostGameMenu() {
                 )}
               </div>
             </div>
-
             <div className="h-px bg-gray-100 mx-8" />
-
             {quizMode === "normal" && (
               <div className="px-8 py-6 flex flex-col gap-3">
                 {hasScheduled ? (
@@ -314,7 +313,6 @@ export default function HostGameMenu() {
                 </button>
               </div>
             )}
-
             {quizMode === "presentacion" && (
               <div className="px-8 py-6">
                 <button
@@ -341,7 +339,6 @@ export default function HostGameMenu() {
         <div className="h-full bg-[#26890c] transition-all duration-1000"
           style={{ width: `${(countdown / (current.time || 20)) * 100}%` }} />
       </div>
-
       <div className="flex-1 flex flex-col items-center justify-between px-4 py-5 gap-4 relative z-10">
         <div className="w-full flex justify-between items-center max-w-5xl">
           <span className="text-[#a0a0b0] text-sm font-semibold">{qIndex + 1} / {quizQuestions.length}</span>
@@ -350,7 +347,6 @@ export default function HostGameMenu() {
           </span>
           <span className="text-[#a0a0b0] text-sm font-semibold">{answersIn}/{players.length} respondieron</span>
         </div>
-
         {current.answerType === "multiple" && (
           <span className="bg-white/10 text-white/50 text-xs font-semibold px-3 py-1 rounded-full">
             Selección múltiple
@@ -359,20 +355,15 @@ export default function HostGameMenu() {
         <h2 className="text-white font-bold text-center text-2xl sm:text-5xl w-full max-w-5xl pb-4">
           {current.text}
         </h2>
-
         {current.image && (
           <img src={current.image} alt="" className="w-full max-w-5xl max-h-[260px] sm:max-h-[320px] object-contain rounded-2xl" />
         )}
-
         {showingScores ? (
           <div className="w-full max-w-5xl flex flex-col items-center gap-4">
             <ScoreBoard scores={scores} />
             <div className="flex gap-4">
               <Button variant="secondary" onClick={() => setShowingScores(false)}>← Volver</Button>
-              <Button variant="save" onClick={() => { broadcastScores(); }}>Mostrar scores a todos</Button>
-              <Button variant="save" onClick={nextQuestion}>
-                {qIndex + 1 >= quizQuestions.length ? "Finalizar" : "Siguiente →"}
-              </Button>
+              <Button variant="save" onClick={goToScores}>Mostrar scores a todos</Button>
             </div>
           </div>
         ) : (
@@ -387,7 +378,7 @@ export default function HostGameMenu() {
             </div>
             <div className="flex gap-4">
               <Button variant="secondary" onClick={() => setShowingScores(true)}>Ver scores</Button>
-              <Button variant="save" onClick={() => { broadcastScores(); }}>
+              <Button variant="save" onClick={goToScores}>
                 {qIndex + 1 >= quizQuestions.length ? "Finalizar" : "Siguiente →"}
               </Button>
             </div>

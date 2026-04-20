@@ -42,7 +42,11 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, player_id: str)
                 answer = data.get("answer")
                 points = data.get("points", 0)
 
-                if manager.has_answered(room_id, question_id, player_id):
+                print(f"[ANSWER] player={player_id} question_id={question_id} points={points}")
+                already = manager.has_answered(room_id, question_id, player_id)
+                print(f"[ANSWER] has_answered={already}")
+
+                if already:
                     await websocket.send_json({
                         "event": "error",
                         "message": "Duplicate answer not allowed"
