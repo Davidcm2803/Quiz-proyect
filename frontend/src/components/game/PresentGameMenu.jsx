@@ -81,7 +81,9 @@ export default function PresentGameMenu() {
 
       if (data.event === "scoreUpdate") {
         setScores(data.scores);
-        setPhase("ranking");
+        setPhase((current) =>
+          current === "showAnswer" || current === "answered" ? current : "ranking"
+        );
       }
 
       if (data.event === "quizEnded") {
