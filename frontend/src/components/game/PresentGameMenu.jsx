@@ -90,8 +90,9 @@ export default function PresentGameMenu() {
       }
 
       if (data.event === "scoreUpdate") {
-        setScores(data.scores);
-      }
+  console.log("scoreUpdate recibido:", data.scores);
+  setScores(data.scores);
+}
 
       if (data.event === "quizEnded") {
         setScores(data.scores);

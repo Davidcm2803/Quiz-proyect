@@ -113,7 +113,8 @@ export default function HostGameMenu() {
         if (data.event === "playerJoined")
           setPlayers((prev) => prev.includes(data.playerId) ? prev : [...prev, data.playerId]);
         if (data.event === "answerSubmitted")
-          setAnswersIn((prev) => prev + 1);
+  console.log("answerSubmitted recibido, answersIn:", answersIn + 1);
+  setAnswersIn((prev) => prev + 1);
         if (data.event === "scoreUpdate")
           setScores(data.scores);
         if (data.event === "quizEnded") {
