@@ -3,6 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useNormalQuiz } from "../../hooks/useNormalQuiz";
 import FloatingDecorations from "../ui/FloatingDecorations";
 import quizsong from "../../assets/quizsong.mp3";
+import config from "../../config";
+
+// config disponible para hooks o extensiones futuras
+const { API_URL, WS_URL } = config;
 
 const COLORS = ["bg-[#e21b3c]", "bg-[#1368ce]", "bg-[#d89e00]", "bg-[#26890c]"];
 const ICONS = ["▲", "◆", "●", "■"];
@@ -155,7 +159,7 @@ export default function StudentGameMenu() {
             <img
               src={question.image}
               alt=""
-              className="w-full max-w-5xl max-h-[260px] sm:max-h-[320px] object-contain rounded-2xl"
+              className="w-full max-w-5xl h-80 sm:h-100 object-cover rounded-2xl"
             />
           )}
           <div className="w-full max-w-5xl grid grid-cols-2 gap-4 sm:gap-5">

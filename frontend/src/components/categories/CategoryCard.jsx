@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 
 const CATEGORY_IMAGES = {
-  Science: "https://images.unsplash.com/photo-1614935151651-0bea6508db6b?q=80&w=1225&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  Science: "https://images.unsplash.com/photo-1614935151651-0bea6508db6b?q=80&w=1225&auto=format&fit=crop",
   Mathematics: "https://images.unsplash.com/photo-1509228468518-180dd4864904?w=600&q=80",
   History: "https://images.unsplash.com/photo-1461360370896-922624d12aa1?w=600&q=80",
   Languages: "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=600&q=80",
@@ -17,16 +17,16 @@ export default function CategoryCard({ title }) {
   return (
     <div
       onClick={() => navigate(`/category/${slug}`)}
-      className="relative overflow-hidden rounded-2xl h-40 shadow-md group cursor-pointer"
+      className="relative overflow-hidden rounded-2xl h-28 sm:h-40 group cursor-pointer"
     >
       <img
         src={image}
         alt={title}
         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
       />
-      <div className="absolute inset-0 bg-black/30 flex items-end">
-        <div className="p-4">
-          <h3 className="text-white text-lg font-bold">{title}</h3>
+      <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent flex items-end">
+        <div className="p-3 sm:p-4">
+          <h3 className="text-white text-sm sm:text-lg font-bold">{title}</h3>
         </div>
       </div>
     </div>

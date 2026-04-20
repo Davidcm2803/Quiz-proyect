@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-
 import { ChevronLeft, ChevronRight, Rocket } from "lucide-react";
+import config from "../../config";
 
-const NASA_KEY = import.meta.env.VITE_NASA_API_KEY || "DEMO_KEY";
 const TWO_HOURS = 2 * 60 * 60 * 1000;
 
 export default function SpaceCarousel() {
@@ -16,7 +15,7 @@ export default function SpaceCarousel() {
 
   const load = useCallback(() => {
     setLoading(true);
-    fetch(`https://api.nasa.gov/planetary/apod?api_key=${NASA_KEY}&count=10`)
+    fetch(`https://api.nasa.gov/planetary/apod?api_key=${config.NASA_KEY || "DEMO_KEY"}&count=10`)
       .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data)) {

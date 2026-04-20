@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
 import ScoreBoard from "./ScoreBoard";
 import Navbar from "../layout/Navbar";
 import Button from "../ui/Button";
@@ -38,9 +40,7 @@ export default function HostGameMenu() {
   const qIndexRef = useRef(0);
   const autoStartRef = useRef(null);
   const hasAutoStarted = useRef(false);
-  // Keep a ref to questions so auto-start closure always sees the latest value
   const questionsRef = useRef([]);
-  // Pending auto-start: if WS isn't open yet when the time arrives, fire as soon as it opens
   const pendingAutoStart = useRef(false);
 
   const current = quizQuestions[qIndex];
@@ -65,7 +65,6 @@ export default function HostGameMenu() {
       });
   }, [roomId]);
 
-  // Countdown ticker for normal mode with scheduled time
   useEffect(() => {
     if (!scheduledAt || quizMode !== "normal") return;
     const tick = () => {
@@ -77,7 +76,6 @@ export default function HostGameMenu() {
     return () => clearInterval(id);
   }, [scheduledAt, quizMode]);
 
-  // Auto-start scheduler — uses refs so it never has stale closure issues
   useEffect(() => {
     if (!scheduledAt || quizMode !== "normal" || phase !== "lobby") return;
     if (hasAutoStarted.current) return;
@@ -87,7 +85,6 @@ export default function HostGameMenu() {
     const trigger = () => {
       if (hasAutoStarted.current) return;
       hasAutoStarted.current = true;
-      // If WS is already open, start immediately; otherwise mark pending
       if (ws.current?.readyState === WebSocket.OPEN) {
         startQuizWithQuestions(questionsRef.current);
       } else {
@@ -95,10 +92,7 @@ export default function HostGameMenu() {
       }
     };
 
-    if (delay <= 0) {
-      trigger();
-      return;
-    }
+    if (delay <= 0) { trigger(); return; }
 
     autoStartRef.current = setTimeout(trigger, delay);
     return () => clearTimeout(autoStartRef.current);
@@ -108,8 +102,6 @@ export default function HostGameMenu() {
     const timeout = setTimeout(() => {
       ws.current = new WebSocket(`${WS_URL}/ws/${roomId}/host`);
       ws.current.onopen = () => {
-        console.log("✅ Host conectado al WS");
-        // Fire pending auto-start if the timer already fired before WS was ready
         if (pendingAutoStart.current) {
           pendingAutoStart.current = false;
           startQuizWithQuestions(questionsRef.current);
@@ -181,7 +173,6 @@ export default function HostGameMenu() {
     startCountdown(q.time || 20);
   };
 
-  // Used by manual button — reads from state (fine, user clicked so state is settled)
   const startQuiz = () => {
     clearTimeout(autoStartRef.current);
     hasAutoStarted.current = true;
@@ -189,7 +180,6 @@ export default function HostGameMenu() {
     launchQuestion(0, questionsRef.current);
   };
 
-  // Used by auto-start — always receives questions explicitly to avoid stale closures
   const startQuizWithQuestions = (questions) => {
     clearTimeout(autoStartRef.current);
     send({ event: "startQuiz" });
@@ -238,6 +228,7 @@ export default function HostGameMenu() {
   const modeInfo = MODE_LABELS[quizMode] || MODE_LABELS.normal;
   const hasScheduled = !!scheduledAt;
   const scheduledInFuture = hasScheduled && timeUntilStart !== null && timeUntilStart > 0;
+  const joinUrl = `${window.location.origin}/join?pin=${roomId}`;
 
   if (phase === "lobby") return (
     <div className="bg-[#F8FBF3] min-h-screen flex flex-col">
@@ -258,6 +249,17 @@ export default function HostGameMenu() {
                 <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${modeInfo.color}`}>
                   {modeInfo.icon} {modeInfo.label}
                 </span>
+              </div>
+
+              <div className="flex flex-col items-center gap-2 mt-6">
+                <QRCodeSVG
+                  value={joinUrl}
+                  size={140}
+                  bgColor="transparent"
+                  fgColor="#1a1a1a"
+                  className="rounded-xl"
+                />
+                <p className="text-[#1a1a1a]/40 text-xs">Escanea para unirte</p>
               </div>
             </div>
 
@@ -289,7 +291,6 @@ export default function HostGameMenu() {
 
             <div className="h-px bg-gray-100 mx-8" />
 
-            {/* Normal mode: auto-starts at scheduled time, host can also start manually */}
             {quizMode === "normal" && (
               <div className="px-8 py-6 flex flex-col gap-3">
                 {hasScheduled ? (
@@ -314,7 +315,6 @@ export default function HostGameMenu() {
               </div>
             )}
 
-            {/* Presentacion mode: host controls everything manually */}
             {quizMode === "presentacion" && (
               <div className="px-8 py-6">
                 <button
@@ -361,11 +361,7 @@ export default function HostGameMenu() {
         </h2>
 
         {current.image && (
-          <img
-            src={current.image}
-            alt=""
-            className="w-full max-w-5xl max-h-[260px] sm:max-h-[320px] object-contain rounded-2xl"
-          />
+          <img src={current.image} alt="" className="w-full max-w-5xl max-h-[260px] sm:max-h-[320px] object-contain rounded-2xl" />
         )}
 
         {showingScores ? (
@@ -373,9 +369,7 @@ export default function HostGameMenu() {
             <ScoreBoard scores={scores} />
             <div className="flex gap-4">
               <Button variant="secondary" onClick={() => setShowingScores(false)}>← Volver</Button>
-              <Button variant="save" onClick={() => { broadcastScores(); }}>
-                Mostrar scores a todos
-              </Button>
+              <Button variant="save" onClick={() => { broadcastScores(); }}>Mostrar scores a todos</Button>
               <Button variant="save" onClick={nextQuestion}>
                 {qIndex + 1 >= quizQuestions.length ? "Finalizar" : "Siguiente →"}
               </Button>
@@ -391,7 +385,6 @@ export default function HostGameMenu() {
                 </div>
               ))}
             </div>
-
             <div className="flex gap-4">
               <Button variant="secondary" onClick={() => setShowingScores(true)}>Ver scores</Button>
               <Button variant="save" onClick={() => { broadcastScores(); }}>

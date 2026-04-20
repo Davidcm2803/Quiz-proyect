@@ -3,7 +3,7 @@ const VARIANTS = {
   secondary: "bg-white text-gray-900 hover:bg-gray-50 shadow-sm",
   ghost:     "bg-white bg-opacity-20 text-white hover:bg-opacity-30",
   nav:       "bg-white text-gray-700 hover:bg-gray-50 shadow-sm border border-gray-200",
-  signup:    "bg-[#4285F4] hover:bg-[#3367D6] text-white shadow-md hover:shadow-lg",
+  signup:    "bg-[#00b64f] hover:bg-[#009641] text-white shadow-md hover:shadow-lg",
   exit:      "bg-white text-gray-700 hover:bg-gray-50 shadow-sm border border-gray-200",
   save:      "bg-[#1a1a1a] hover:bg-[#333] text-white shadow-sm",
 };

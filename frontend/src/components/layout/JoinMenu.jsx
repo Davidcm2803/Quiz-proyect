@@ -1,16 +1,26 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import GamePin from "../ui/Gamepin";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import GamePin from "../ui/GamePin";
 import FloatingDecorations from "../ui/FloatingDecorations";
 import logo from "../../assets/logo.png";
+import config from "../../config";
 
 export default function JoinMenu() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState("pin");
   const [pin, setPin] = useState("");
   const [nickname, setNickname] = useState("");
   const [error, setError] = useState("");
   const [joining, setJoining] = useState(false);
+
+  useEffect(() => {
+    const pinFromUrl = searchParams.get("pin");
+    if (pinFromUrl) {
+      setPin(pinFromUrl);
+      setStep("nickname");
+    }
+  }, []);
 
   const handlePin = (code) => {
     setPin(code);
@@ -21,7 +31,7 @@ export default function JoinMenu() {
     if (!nickname.trim()) { setError("Ingresa tu nombre"); return; }
     setJoining(true);
     try {
-      const res = await fetch(`http://localhost:8000/quizzes/by-pin/${pin}`);
+      const res = await fetch(`${config.API_URL}/quizzes/by-pin/${pin}`);
       const quiz = await res.json();
       const mode = quiz?.mode || "normal";
       const name = nickname.trim();

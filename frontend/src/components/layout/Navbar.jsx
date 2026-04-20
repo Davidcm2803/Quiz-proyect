@@ -4,7 +4,7 @@ import { Compass, GraduationCap, Play, Settings, Menu, X } from "lucide-react";
 import logo from "../../assets/logo.png";
 import Button from "../ui/Button";
 import NavItem from "../ui/NavItem";
-import JoinButton from "../ui/Joinbutton";
+import JoinButton from "../ui/JoinButton";
 import MobileMenu from "../ui/MobileMenu";
 import UserDropdown from "../ui/UserDropdown";
 import { useAuth } from "../../context/AuthContext";

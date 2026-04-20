@@ -4,8 +4,9 @@ import ScoreBoard from "./ScoreBoard";
 import FloatingDecorations from "../ui/FloatingDecorations";
 import quizsong from "../../assets/quizsong.mp3";
 import { useGameAnswer } from "../../hooks/useGameAnswer";
+import config from "../../config";
 
-const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8000";
+const WS_URL = config.WS_URL;
 
 const COLORS = ["bg-[#e21b3c]", "bg-[#1368ce]", "bg-[#d89e00]", "bg-[#26890c]"];
 const ICONS = ["▲", "◆", "●", "■"];

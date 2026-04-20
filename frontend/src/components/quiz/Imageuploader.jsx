@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { ImagePlus, X, Search, Upload, Loader2 } from "lucide-react";
-
-const UNSPLASH_KEY = import.meta.env.VITE_UNSPLASH_KEY;
+import config from "../../config";
 
 function UnsplashModal({ onSelect, onClose }) {
   const [query, setQuery] = useState("");
@@ -21,7 +20,7 @@ function UnsplashModal({ onSelect, onClose }) {
     try {
       const res = await fetch(
         `https://api.unsplash.com/search/photos?query=${encodeURIComponent(q)}&per_page=16&orientation=landscape`,
-        { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` } }
+        { headers: { Authorization: `Client-ID ${config.UNSPLASH_KEY}` } }
       );
       if (!res.ok) throw new Error("Error buscando imágenes");
       const data = await res.json();

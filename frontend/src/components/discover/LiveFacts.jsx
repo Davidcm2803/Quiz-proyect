@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { Telescope, RefreshCw, Globe2, Satellite, ExternalLink } from "lucide-react";
-
-const NASA_KEY = import.meta.env.VITE_NASA_API_KEY || "DEMO_KEY";
+import config from "../../config";
 
 async function fetchAPOD() {
   const res = await fetch(
-    `https://api.nasa.gov/planetary/apod?api_key=${NASA_KEY}`
+    `https://api.nasa.gov/planetary/apod?api_key=${config.NASA_KEY || "DEMO_KEY"}`
   );
   if (!res.ok) throw new Error("APOD failed");
   const d = await res.json();
@@ -25,6 +24,7 @@ async function fetchFact() {
   const d = await res.json();
   return d.text;
 }
+
 async function fetchISS() {
   const res = await fetch("https://api.wheretheiss.at/v1/satellites/25544");
   const d = await res.json();
@@ -42,6 +42,7 @@ async function fetchISS() {
       gd.display_name?.split(",").slice(-2).join(",").trim() ||
       "Over the Ocean";
   } catch {
+    // silently use default
   }
 
   return {
@@ -53,6 +54,7 @@ async function fetchISS() {
     mapsUrl: `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}&zoom=4`,
   };
 }
+
 async function fetchNews() {
   const d = new Date();
   const y = d.getFullYear();
@@ -86,6 +88,7 @@ export default function LiveFacts() {
 
   const [news, setNews] = useState([]);
   const [newsLoading, setNewsLoading] = useState(true);
+
   useEffect(() => {
     const cached = sessionStorage.getItem("apod_cache");
     if (cached) {
@@ -104,6 +107,7 @@ export default function LiveFacts() {
       .catch(console.warn)
       .finally(() => setApodLoading(false));
   }, []);
+
   const refreshFact = useCallback(() => {
     setFactLoading(true);
     fetchFact()
@@ -111,7 +115,9 @@ export default function LiveFacts() {
       .catch(() => setFact("The Eiffel Tower can be 15 cm taller in summer due to thermal expansion."))
       .finally(() => setFactLoading(false));
   }, []);
+
   useEffect(() => { refreshFact(); }, [refreshFact]);
+
   useEffect(() => {
     const load = () => {
       fetchISS()
@@ -123,6 +129,7 @@ export default function LiveFacts() {
     const id = setInterval(load, 15_000);
     return () => clearInterval(id);
   }, []);
+
   useEffect(() => {
     fetchNews()
       .then(setNews)
@@ -135,7 +142,7 @@ export default function LiveFacts() {
       <div className="flex justify-between items-end mb-5">
         <div>
           <h2 className="text-2xl font-black text-gray-900">Live from the Universe</h2>
-          <p className="text-gray-500 text-sm">NASA · Wikipedia · ISS Tracker — updated in real time.</p>
+          <p className="text-gray-500 text-sm">NASA · Wikipedia · ISS Tracker – updated in real time.</p>
         </div>
       </div>
 
@@ -187,6 +194,7 @@ export default function LiveFacts() {
             </div>
           )}
         </div>
+
         <div className="rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 p-6 flex flex-col justify-between shadow-sm">
           <div>
             <div className="flex items-center gap-2 mb-3">
@@ -213,6 +221,7 @@ export default function LiveFacts() {
             <RefreshCw size={12} className={factLoading ? "animate-spin" : ""} /> New fact
           </button>
         </div>
+
         <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 p-6 flex flex-col justify-between shadow-md">
           <div>
             <div className="flex items-center gap-2 mb-3">
@@ -269,6 +278,7 @@ export default function LiveFacts() {
             </a>
           )}
         </div>
+
         <div className="lg:col-span-4 rounded-2xl bg-white border border-gray-100 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">

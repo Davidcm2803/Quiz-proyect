@@ -1,5 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-import AdminNavbar from "../components/Adminview/Adminnavbar";
+import AdminNavbar from "../components/Adminview/AdminNavbar";
 import AdminSidebar from "../components/Adminview/Adminsidebar";
 import Library from "../components/Adminview/Library";
 import AccountForm from "../components/layout/AccountForm";

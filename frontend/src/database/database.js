@@ -1,4 +1,6 @@
-const API_URL = "http://localhost:8000";
+import config from "../config";
+
+const API_URL = config.API_URL;
 
 /**
  * @returns {Promise<Question[]>}

@@ -1,7 +1,7 @@
 import logo from "../../assets/logo.png";
 import { X, User, LogOut } from "lucide-react";
 import NavItem from "./NavItem";
-import JoinButton from "./Joinbutton";
+import JoinButton from "./JoinButton";
 import { useAuth } from "../../context/AuthContext";
 
 export default function MobileMenu({

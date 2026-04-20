@@ -49,7 +49,6 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, player_id: str)
                     })
                     continue
 
-                # suma los puntos que calculó el frontend
                 if points > 0:
                     manager.update_score(room_id, player_id, points)
 
@@ -57,6 +56,13 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, player_id: str)
                     "event": "answerSubmitted",
                     "playerId": player_id
                 })
+
+                room = manager.rooms.get(room_id)
+                if room:
+                    await manager.broadcast(room_id, {
+                        "event": "scoreUpdate",
+                        "scores": room.scores
+                    })
 
             elif event == "updateScore":
                 room = manager.rooms.get(room_id)
