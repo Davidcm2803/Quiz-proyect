@@ -2,10 +2,10 @@ import { useState } from "react";
 import { X } from "lucide-react";
 
 const ANSWER_CONFIG = [
-  { color: "bg-[#e21b3c]", icon: "▲", label: "Answer 1" },
-  { color: "bg-[#1368ce]", icon: "◆", label: "Answer 2" },
-  { color: "bg-[#d89e00]", icon: "●", label: "Answer 3" },
-  { color: "bg-[#26890c]", icon: "■", label: "Answer 4" },
+  { color: "bg-[#e8678f]", icon: "▲", label: "Answer 1" },
+  { color: "bg-[#3d98d6]", icon: "◆", label: "Answer 2" },
+  { color: "bg-[#00b64f]", icon: "●", label: "Answer 3" },
+  { color: "bg-[#f93d3a]", icon: "■", label: "Answer 4" },
 ];
 
 function AnswerModal({ config, index, value, isCorrect, onSave, onClose }) {
