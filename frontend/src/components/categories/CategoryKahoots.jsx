@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { RefreshCw } from "lucide-react";
 import logo from "../../assets/logo.png";
 import { useDailyQuiz } from "../../hooks/useDailyQuizzes";
 
@@ -67,28 +68,28 @@ function QuizCard({ rank, question, slug, index, totalQuestions, quizTitle, navi
   const img = images[index % images.length];
 
   return (
-    <div className="flex items-center gap-4">
-      <span className="text-2xl font-black text-gray-800 w-8 text-center flex-shrink-0">
+    <div className="flex items-center gap-2 sm:gap-4">
+      <span className="hidden sm:block text-2xl font-black text-gray-800 w-8 text-center flex-shrink-0">
         {rank}
       </span>
       <div
         onClick={() => navigate(`/student/daily-${slug}/Jugador`)}
         className="flex-1 flex items-stretch bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow cursor-pointer overflow-hidden"
       >
-        <div className="w-36 h-24 flex-shrink-0">
+        <div className="w-20 sm:w-36 h-20 sm:h-24 flex-shrink-0">
           <img src={img} alt="" className="w-full h-full object-cover" />
         </div>
-        <div className="flex-1 px-6 py-3 flex flex-col justify-between min-w-0">
-          <div className="flex items-center justify-between">
-            <img src={logo} alt="QHit" className="h-5 w-auto" />
-            <span className="text-xs border-2 border-[#fde8e0] text-gray-800 font-bold px-3 py-0.5 rounded-full">
+        <div className="flex-1 px-3 sm:px-6 py-2 sm:py-3 flex flex-col justify-between min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <img src={logo} alt="QHit" className="h-4 sm:h-5 w-auto" />
+            <span className="text-xs border-2 border-[#fde8e0] text-gray-800 font-bold px-2 sm:px-3 py-0.5 rounded-full flex-shrink-0">
               IA
             </span>
           </div>
-          <p className="font-semibold text-gray-800 text-sm text-left leading-snug line-clamp-2">
+          <p className="font-semibold text-gray-800 text-xs sm:text-sm text-left leading-snug line-clamp-2 mt-1">
             {quizTitle}
           </p>
-          <p className="text-xs text-gray-400 text-right">
+          <p className="text-xs text-gray-400 text-right mt-1">
             {totalQuestions} preguntas · {question.timeLimit}s
           </p>
         </div>
@@ -100,7 +101,7 @@ function QuizCard({ rank, question, slug, index, totalQuestions, quizTitle, navi
 export default function CategoryKahoots() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const { quiz, loading } = useDailyQuiz(slug);
+  const { quiz, loading, regenerate } = useDailyQuiz(slug);
 
   const label = slug
     ?.replace(/-/g, " ")
@@ -111,17 +112,22 @@ export default function CategoryKahoots() {
   const visibleQuestions = quiz?.questions?.slice(0, 6) ?? [];
 
   return (
-    <div className="bg-[#F8FBF3] pb-10">
-      <div className="relative h-48 overflow-hidden">
+    <div className="bg-[#F8FBF3] min-h-screen">
+      <div className="relative h-36 sm:h-48 overflow-hidden">
         <img src={bannerImg} alt={label} className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-          <h1 className="text-white text-4xl font-black">{label}</h1>
+        <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-1 px-4">
+          <h1 className="text-white text-2xl sm:text-4xl font-black text-center">{label}</h1>
+          {quiz?.title && (
+            <p className="text-white/80 text-sm sm:text-base font-medium text-center line-clamp-1 max-w-lg">
+              {quiz.title}
+            </p>
+          )}
         </div>
       </div>
 
-      <div className="px-16 py-6">
+      <div className="px-4 sm:px-8 lg:px-16 py-6">
         {loading ? (
-          <div className="flex flex-col items-center gap-3 py-20">
+          <div className="flex flex-col items-center gap-3 py-10">
             <div className="flex gap-1.5">
               {[0, 1, 2].map((i) => (
                 <div
@@ -135,8 +141,26 @@ export default function CategoryKahoots() {
           </div>
         ) : visibleQuestions.length > 0 ? (
           <>
-            <h2 className="text-xl font-black text-gray-800 mb-5">Preguntas del dia</h2>
-            <div className="grid grid-cols-2 gap-x-12 gap-y-4">
+            <div className="flex items-start justify-between gap-4 mb-5">
+              <div>
+                <h2 className="text-lg sm:text-xl font-black text-gray-800">
+                  {quiz?.title ?? "Preguntas del dia"}
+                </h2>
+                <p className="text-sm text-gray-400 mt-0.5">
+                  {visibleQuestions.length} preguntas · Generado hoy por IA
+                </p>
+              </div>
+
+              <button
+                onClick={regenerate}
+                className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-gray-800 border border-gray-200 hover:border-gray-400 rounded-full px-3 py-1.5 transition-all flex-shrink-0"
+              >
+                <RefreshCw size={13} />
+                Nuevo tema
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-x-12 lg:gap-y-4">
               {visibleQuestions.map((q, i) => (
                 <QuizCard
                   key={i}

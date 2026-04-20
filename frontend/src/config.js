@@ -14,6 +14,9 @@ const config = {
   // ── NASA ─────────────────────────────────────────────────────────
   NASA_KEY: ENV.VITE_NASA_API_KEY || "",
 
+  // ── Pixel ─────────────────────────────────────────────────────────
+  PEXELS_KEY: ENV.VITE_PEXELS_KEY || "",
+
   // ── Firebase ─────────────────────────────────────────────────────
   firebase: {
     apiKey:            ENV.VITE_FIREBASE_API_KEY             || "",

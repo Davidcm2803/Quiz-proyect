@@ -159,7 +159,7 @@ export default function StudentGameMenu() {
             <img
               src={question.image}
               alt=""
-              className="w-full max-w-5xl max-h-[260px] sm:max-h-[320px] object-contain rounded-2xl"
+              className="w-full max-w-5xl h-80 sm:h-100 object-cover rounded-2xl"
             />
           )}
           <div className="w-full max-w-5xl grid grid-cols-2 gap-4 sm:gap-5">
