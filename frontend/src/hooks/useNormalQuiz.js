@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import config from "../config";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL = config.API_URL;
 
 function calcTimePoints(timeUsed, totalTime) {
   if (timeUsed <= 0) return 100;
@@ -14,8 +15,11 @@ function calcMultiplePoints(selected, answers) {
     .filter((v) => v !== null);
   const totalCorrect = correctIndexes.length;
   const acertadas = selected.filter((s) => correctIndexes.includes(s)).length;
-  const incorrectas = selected.filter((s) => !correctIndexes.includes(s)).length;
-  const points = incorrectas > 0 ? 0 : Math.round((acertadas / totalCorrect) * 100);
+  const incorrectas = selected.filter(
+    (s) => !correctIndexes.includes(s),
+  ).length;
+  const points =
+    incorrectas > 0 ? 0 : Math.round((acertadas / totalCorrect) * 100);
   const allCorrect = acertadas === totalCorrect && incorrectas === 0;
   const partial = points > 0 && !allCorrect;
   return { points, allCorrect, partial };
@@ -47,77 +51,91 @@ export function useNormalQuiz(pin, playerId, ready) {
   const questionIndexRef = useRef(0);
   const quizRef = useRef(null);
 
-  useEffect(() => { answerLogRef.current = answerLog; }, [answerLog]);
-  useEffect(() => { totalScoreRef.current = totalScore; }, [totalScore]);
-  useEffect(() => { questionIndexRef.current = questionIndex; }, [questionIndex]);
-  useEffect(() => { quizRef.current = quiz; }, [quiz]);
+  useEffect(() => {
+    answerLogRef.current = answerLog;
+  }, [answerLog]);
+  useEffect(() => {
+    totalScoreRef.current = totalScore;
+  }, [totalScore]);
+  useEffect(() => {
+    questionIndexRef.current = questionIndex;
+  }, [questionIndex]);
+  useEffect(() => {
+    quizRef.current = quiz;
+  }, [quiz]);
 
-  const submitFinalResult = useCallback(async (finalLog, finalScore) => {
-    setPhase("finished");
-    if (String(pin).startsWith("daily-")) return;
-    try {
-      const res = await fetch(`${API_URL}/normal/submit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          pin: Number(pin),
-          player: playerId,
-          total_score: finalScore,
-          answers: finalLog,
-        }),
-      });
-      const data = await res.json();
-      if (data.position) setFinalPosition(data.position);
-    } catch {}
-  }, [pin, playerId]);
+  const submitFinalResult = useCallback(
+    async (finalLog, finalScore) => {
+      setPhase("finished");
+      if (String(pin).startsWith("daily-")) return;
+      try {
+        const res = await fetch(`${API_URL}/normal/submit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            pin: Number(pin),
+            player: playerId,
+            total_score: finalScore,
+            answers: finalLog,
+          }),
+        });
+        const data = await res.json();
+        if (data.position) setFinalPosition(data.position);
+      } catch {}
+    },
+    [pin, playerId],
+  );
 
-  const loadQuestionAt = useCallback((idx, quizData) => {
-    const q = quizData?.questions?.[idx];
-    if (!q) {
-      submitFinalResult(answerLogRef.current, totalScoreRef.current);
-      return;
-    }
-    const isMultiple = q.answerType === "multiple";
-    setSelected(isMultiple ? [] : null);
-    setResult(null);
-    setQuestionIndex(idx);
-    questionIndexRef.current = idx;
-    setCountdown(q.time || 20);
-    questionStartRef.current = Date.now();
-    setPhase("question");
+  const loadQuestionAt = useCallback(
+    (idx, quizData) => {
+      const q = quizData?.questions?.[idx];
+      if (!q) {
+        submitFinalResult(answerLogRef.current, totalScoreRef.current);
+        return;
+      }
+      const isMultiple = q.answerType === "multiple";
+      setSelected(isMultiple ? [] : null);
+      setResult(null);
+      setQuestionIndex(idx);
+      questionIndexRef.current = idx;
+      setCountdown(q.time || 20);
+      questionStartRef.current = Date.now();
+      setPhase("question");
 
-    clearInterval(countdownRef.current);
-    countdownRef.current = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(countdownRef.current);
-          const timeoutLog = {
-            question_id: q.id,
-            answer: "wrong",
-            points: 0,
-            time_used: q.time || 20,
-          };
-          const newLog = [...answerLogRef.current, timeoutLog];
-          const newScore = totalScoreRef.current;
-          answerLogRef.current = newLog;
-          setAnswerLog(newLog);
-          setResult({ correct: false, partial: false, points: 0 });
-          playSound("wrong.mp3", 0.3);
-          setPhase("showAnswer");
-          setTimeout(() => {
-            const nextIdx = idx + 1;
-            if (nextIdx >= quizData.questions.length) {
-              submitFinalResult(newLog, newScore);
-            } else {
-              loadQuestionAt(nextIdx, quizData);
-            }
-          }, 2000);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  }, [submitFinalResult]);
+      clearInterval(countdownRef.current);
+      countdownRef.current = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(countdownRef.current);
+            const timeoutLog = {
+              question_id: q.id,
+              answer: "wrong",
+              points: 0,
+              time_used: q.time || 20,
+            };
+            const newLog = [...answerLogRef.current, timeoutLog];
+            const newScore = totalScoreRef.current;
+            answerLogRef.current = newLog;
+            setAnswerLog(newLog);
+            setResult({ correct: false, partial: false, points: 0 });
+            playSound("wrong.mp3", 0.3);
+            setPhase("showAnswer");
+            setTimeout(() => {
+              const nextIdx = idx + 1;
+              if (nextIdx >= quizData.questions.length) {
+                submitFinalResult(newLog, newScore);
+              } else {
+                loadQuestionAt(nextIdx, quizData);
+              }
+            }, 2000);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    },
+    [submitFinalResult],
+  );
 
   useEffect(() => {
     if (!ready) return;
@@ -125,16 +143,18 @@ export function useNormalQuiz(pin, playerId, ready) {
     if (String(pin).startsWith("daily-")) {
       const slug = pin.replace("daily-", "");
       try {
-        const cached = localStorage.getItem("daily_quizzes");
-        if (!cached) { setPhase("error"); return; }
-        const { quizzes } = JSON.parse(cached);
-        const raw = quizzes?.[slug];
-        if (!raw) { setPhase("error"); return; }
+        const today = new Date().toISOString().slice(0, 10);
+        const raw = JSON.parse(localStorage.getItem(`quiz_${slug}_${today}`));
+        if (!raw) {
+          setPhase("error");
+          return;
+        }
         const adapted = {
           ...raw,
           questions: raw.questions.map((q, i) => ({
             id: i,
             text: q.question,
+            image: q.image ?? null,
             answers: q.answers.map((a, j) => ({
               text: a,
               is_correct: Array.isArray(q.correct)
@@ -193,23 +213,68 @@ export function useNormalQuiz(pin, playerId, ready) {
     return () => clearInterval(scheduledRef.current);
   }, [phase, quiz]);
 
-  const submitAnswer = useCallback((i) => {
-    const currentQuiz = quizRef.current;
-    const idx = questionIndexRef.current;
-    if (!currentQuiz) return;
-    const q = currentQuiz.questions[idx];
-    const isMultiple = q.answerType === "multiple";
+  const submitAnswer = useCallback(
+    (i) => {
+      const currentQuiz = quizRef.current;
+      const idx = questionIndexRef.current;
+      if (!currentQuiz) return;
+      const q = currentQuiz.questions[idx];
+      const isMultiple = q.answerType === "multiple";
 
-    if (isMultiple) {
-      if (i === "confirm") {
-        clearInterval(countdownRef.current);
+      if (isMultiple) {
+        if (i === "confirm") {
+          clearInterval(countdownRef.current);
+          setSelected((sel) => {
+            const arr = Array.isArray(sel) ? sel : [];
+            const { points, allCorrect, partial } = calcMultiplePoints(
+              arr,
+              q.answers,
+            );
+            const timeUsed = (Date.now() - questionStartRef.current) / 1000;
+            const logEntry = {
+              question_id: q.id,
+              answer: allCorrect ? "correct" : partial ? "partial" : "wrong",
+              points,
+              time_used: timeUsed,
+            };
+            const newLog = [...answerLogRef.current, logEntry];
+            const newScore = totalScoreRef.current + points;
+            answerLogRef.current = newLog;
+            totalScoreRef.current = newScore;
+            setAnswerLog(newLog);
+            setTotalScore(newScore);
+            setResult({ correct: allCorrect, partial, points });
+            if (allCorrect) playSound("correct.mp3");
+            else if (partial) playSound("correct.mp3", 0.3);
+            else playSound("wrong.mp3");
+            setPhase("showAnswer");
+            setTimeout(() => {
+              const nextIdx = idx + 1;
+              if (nextIdx >= currentQuiz.questions.length) {
+                submitFinalResult(newLog, newScore);
+              } else {
+                loadQuestionAt(nextIdx, currentQuiz);
+              }
+            }, 2000);
+            return arr;
+          });
+        } else {
+          setSelected((prev) => {
+            const arr = Array.isArray(prev) ? prev : [];
+            return arr.includes(i) ? arr.filter((s) => s !== i) : [...arr, i];
+          });
+        }
+      } else {
         setSelected((sel) => {
-          const arr = Array.isArray(sel) ? sel : [];
-          const { points, allCorrect, partial } = calcMultiplePoints(arr, q.answers);
+          if (sel !== null) return sel;
+          clearInterval(countdownRef.current);
+          const isCorrect = q.answers?.[i]?.is_correct ?? false;
+          const totalTime = q.time || 20;
           const timeUsed = (Date.now() - questionStartRef.current) / 1000;
+          const points = isCorrect ? calcTimePoints(timeUsed, totalTime) : 0;
           const logEntry = {
             question_id: q.id,
-            answer: allCorrect ? "correct" : partial ? "partial" : "wrong",
+            answer: isCorrect ? "correct" : "wrong",
             points,
             time_used: timeUsed,
           };
@@ -219,9 +284,8 @@ export function useNormalQuiz(pin, playerId, ready) {
           totalScoreRef.current = newScore;
           setAnswerLog(newLog);
           setTotalScore(newScore);
-          setResult({ correct: allCorrect, partial, points });
-          if (allCorrect) playSound("correct.mp3");
-          else if (partial) playSound("correct.mp3", 0.3);
+          setResult({ correct: isCorrect, partial: false, points });
+          if (isCorrect) playSound("correct.mp3");
           else playSound("wrong.mp3");
           setPhase("showAnswer");
           setTimeout(() => {
@@ -232,50 +296,12 @@ export function useNormalQuiz(pin, playerId, ready) {
               loadQuestionAt(nextIdx, currentQuiz);
             }
           }, 2000);
-          return arr;
-        });
-      } else {
-        setSelected((prev) => {
-          const arr = Array.isArray(prev) ? prev : [];
-          return arr.includes(i) ? arr.filter((s) => s !== i) : [...arr, i];
+          return i;
         });
       }
-    } else {
-      setSelected((sel) => {
-        if (sel !== null) return sel;
-        clearInterval(countdownRef.current);
-        const isCorrect = q.answers?.[i]?.is_correct ?? false;
-        const totalTime = q.time || 20;
-        const timeUsed = (Date.now() - questionStartRef.current) / 1000;
-        const points = isCorrect ? calcTimePoints(timeUsed, totalTime) : 0;
-        const logEntry = {
-          question_id: q.id,
-          answer: isCorrect ? "correct" : "wrong",
-          points,
-          time_used: timeUsed,
-        };
-        const newLog = [...answerLogRef.current, logEntry];
-        const newScore = totalScoreRef.current + points;
-        answerLogRef.current = newLog;
-        totalScoreRef.current = newScore;
-        setAnswerLog(newLog);
-        setTotalScore(newScore);
-        setResult({ correct: isCorrect, partial: false, points });
-        if (isCorrect) playSound("correct.mp3");
-        else playSound("wrong.mp3");
-        setPhase("showAnswer");
-        setTimeout(() => {
-          const nextIdx = idx + 1;
-          if (nextIdx >= currentQuiz.questions.length) {
-            submitFinalResult(newLog, newScore);
-          } else {
-            loadQuestionAt(nextIdx, currentQuiz);
-          }
-        }, 2000);
-        return i;
-      });
-    }
-  }, [submitFinalResult, loadQuestionAt]);
+    },
+    [submitFinalResult, loadQuestionAt],
+  );
 
   return {
     phase,

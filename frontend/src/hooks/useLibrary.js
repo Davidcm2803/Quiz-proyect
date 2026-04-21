@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import { deleteQuiz as deleteQuizApi } from "../database/database.js";
+import config from "../config";
 
-const API = "http://localhost:8000";
+const API_URL = config.API_URL;
 
 export function useLibrary(mode = null) {
   const { user } = useAuth();
@@ -14,8 +15,8 @@ export function useLibrary(mode = null) {
     if (!user?.id) return;
     setLoading(true);
     const url = mode
-      ? `${API}/quizzes/by-creator/${user.id}?mode=${mode}`
-      : `${API}/quizzes/by-creator/${user.id}`;
+      ? `${API_URL}/quizzes/by-creator/${user.id}?mode=${mode}`
+      : `${API_URL}/quizzes/by-creator/${user.id}`;
     fetch(url)
       .then((r) => r.json())
       .then(setQuizzes)

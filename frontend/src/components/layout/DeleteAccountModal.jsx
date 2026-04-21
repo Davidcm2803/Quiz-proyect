@@ -3,8 +3,8 @@ import { Trash2, Loader2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import Button from "../ui/Button";
 import { Overlay, ModalHeader } from "./ChangeUsernameModal";
+import config from "../../config";
 
-const BASE_URL = "http://localhost:8000";
 const CONFIRM_WORD = "ELIMINAR";
 
 export default function DeleteAccountModal({ onClose }) {
@@ -20,7 +20,7 @@ export default function DeleteAccountModal({ onClose }) {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${BASE_URL}/users/${user.id}`, { method: "DELETE" });
+      const res = await fetch(`${config.API_URL}/users/${user.id}`, { method: "DELETE" });
       const data = await res.json();
       if (!res.ok) throw data;
       logout();

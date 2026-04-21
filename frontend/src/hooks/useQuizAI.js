@@ -1,9 +1,12 @@
 import { useState } from "react";
+import config from "../config";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_API_KEY = import.meta.env.VITE_QHIT_KEY;
-const UNSPLASH_KEY = import.meta.env.VITE_UNSPLASH_KEY;
+const GROQ_API_KEY = config.GROQ_KEY;
+const UNSPLASH_KEY = config.UNSPLASH_KEY;
 const MODEL = "llama-3.1-8b-instant";
+
+const CATEGORIES = ["science", "mathematics", "history", "languages", "technology", "art-and-design"];
 
 const simplifyImageQuery = async (question) => {
   try {
@@ -34,6 +37,19 @@ const simplifyImageQuery = async (question) => {
   }
 };
 
+const searchUnsplash = async (query) => {
+  try {
+    const res = await fetch(
+      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape`,
+      { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` } },
+    );
+    const data = await res.json();
+    return data.results?.[0]?.urls?.regular ?? null;
+  } catch {
+    return null;
+  }
+};
+
 const fetchWikipediaImage = async (query) => {
   try {
     const searchRes = await fetch(
@@ -50,19 +66,6 @@ const fetchWikipediaImage = async (query) => {
     const pages = imgData?.query?.pages;
     const page = pages?.[Object.keys(pages)[0]];
     return page?.thumbnail?.source ?? null;
-  } catch {
-    return null;
-  }
-};
-
-const searchUnsplash = async (query) => {
-  try {
-    const res = await fetch(
-      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape`,
-      { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` } },
-    );
-    const data = await res.json();
-    return data.results?.[0]?.urls?.regular ?? null;
   } catch {
     return null;
   }
@@ -95,96 +98,112 @@ export const fetchImage = async (question) => {
   }
 };
 
+const SYSTEM_PROMPT = `Eres un generador de quizzes educativos.
+Responde UNICAMENTE con JSON valido, sin texto adicional, sin bloques de codigo.
+Formato exacto:
+{"title":"titulo","questions":[{"question":"pregunta","answerType":"single","timeLimit":40,"answers":["A","B","C","D"],"correct":0}]}
+Reglas:
+- Genera exactamente 8 preguntas sobre un subtema especifico dentro de la categoria (NO uses el nombre de la categoria como titulo)
+- El campo "title" debe ser el subtema concreto que elegiste, por ejemplo: "El cuerpo humano", "Algebra lineal", "La Segunda Guerra Mundial", "Verbos irregulares en ingles", "Inteligencia artificial", "El Renacimiento italiano"
+- correct es el indice 0-3 de la respuesta correcta
+- Respuestas cortas maximo 5 palabras
+- Varia timeLimit entre 20, 30 y 40
+- JSON completo y cerrado`;
+
 const extractJSON = (raw) => {
   let clean = raw.replace(/```json|```/gi, "").trim();
   const start = clean.indexOf("{");
   const end = clean.lastIndexOf("}");
-  if (start === -1 || end === -1 || end <= start) {
-    throw new Error("No JSON object found in response");
-  }
-  clean = clean.slice(start, end + 1);
+  if (start === -1 || end === -1) throw new Error("No JSON found");
+  return JSON.parse(clean.slice(start, end + 1));
+};
 
+const generateQuizForCategory = async (slug) => {
+  const label = slug.replace(/-/g, " ").replace(/\band\b/g, "&");
+  const res = await fetch(GROQ_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${GROQ_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        {
+          role: "user",
+          content: `Elige un subtema especifico y creativo dentro de "${label}" y genera el quiz sobre ese subtema.`,
+        },
+      ],
+      temperature: 0.8,
+      max_tokens: 1200,
+    }),
+  });
+
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  const raw = data.choices[0].message.content.trim();
+  const parsed = extractJSON(raw);
+  const questionsWithImages = await Promise.all(
+    (parsed.questions ?? []).map(async (q) => ({
+      ...q,
+      image: await fetchImage(q.question),
+    }))
+  );
+
+  return { ...parsed, questions: questionsWithImages };
+};
+
+const getTodayKey = () => new Date().toISOString().slice(0, 10);
+const getCacheKey = (slug) => `quiz_${slug}_${getTodayKey()}`;
+const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+
+export const getCachedQuiz = (slug) => {
   try {
-    return JSON.parse(clean);
+    const raw = localStorage.getItem(getCacheKey(slug));
+    return raw ? JSON.parse(raw) : null;
   } catch {
-    const lastCompleteQuestion = clean.lastIndexOf("},\n    {");
-    if (lastCompleteQuestion !== -1) {
-      const truncated = clean.slice(0, lastCompleteQuestion + 1) + "\n  ]\n}";
-      return JSON.parse(truncated);
-    }
-    throw new Error("Could not recover valid JSON from response");
+    return null;
   }
 };
 
-const validateQuiz = (parsed) => {
-  if (!parsed || typeof parsed !== "object")
-    throw new Error("Response is not an object");
-  if (typeof parsed.title !== "string" || !parsed.title.trim())
-    throw new Error("Missing title");
-  if (!Array.isArray(parsed.questions) || parsed.questions.length === 0)
-    throw new Error("No questions array");
+export const setCachedQuiz = (slug, quiz) => {
+  try {
+    localStorage.setItem(getCacheKey(slug), JSON.stringify(quiz));
+  } catch {}
+};
 
-  return parsed.questions
-    .filter(
-      (q) =>
-        typeof q.question === "string" &&
-        Array.isArray(q.answers) &&
-        q.answers.length >= 2 &&
-        (typeof q.correct === "number" || Array.isArray(q.correct)),
-    )
-    .map((q) => ({
-      question: q.question,
-      answers: q.answers,
-      correct: q.correct,
-      timeLimit: [15, 20, 30].includes(q.timeLimit) ? q.timeLimit : 20,
-      answerType: q.answerType === "multiple" ? "multiple" : "single",
-    }));
+export const clearCachedQuiz = (slug) => {
+  localStorage.removeItem(getCacheKey(slug));
+};
+
+export const loadOrGenerateDailyQuizzes = async () => {
+  const quizzes = {};
+  for (const slug of CATEGORIES) {
+    const cached = getCachedQuiz(slug);
+    if (cached) {
+      quizzes[slug] = cached;
+      continue;
+    }
+    try {
+      const quiz = await generateQuizForCategory(slug);
+      setCachedQuiz(slug, quiz);
+      quizzes[slug] = quiz;
+      await delay(1200);
+    } catch {
+      quizzes[slug] = null;
+    }
+  }
+  return quizzes;
 };
 
 export function useQuizAI({ setTitle, setQuestions, setActiveIndex }) {
   const [generating, setGenerating] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(null);
 
   const generateQuiz = async (prompt) => {
-    if (!prompt.trim()) return;
     setGenerating(true);
-    setError("");
-
-    const systemPrompt = `
-Eres un generador de quizzes educativos extremadamente preciso.
-Cuando el tema sea de cultura pop, películas, series, videojuegos, cómics o cualquier franquicia conocida,
-debes asegurarte de que las respuestas correctas sean 100% verídicas según el canon oficial.
-
-Ejemplos de datos que debes conocer con precisión:
-- Las Piedras del Infinito en Marvel: Espacio=azul, Mente=amarilla, Realidad=roja, Poder=morada, Alma=naranja, Tiempo=verde
-- No inventes ni confundas colores, nombres, fechas o datos canónicos
-
-Responde ÚNICAMENTE con JSON válido, sin texto adicional, sin bloques de código, sin explicaciones.
-El formato debe ser exactamente este:
-{
-  "title": "título del quiz",
-  "questions": [
-    {
-      "question": "texto de la pregunta",
-      "answerType": "single",
-      "timeLimit": 20,
-      "answers": ["opción A", "opción B", "opción C", "opción D"],
-      "correct": 0
-    }
-  ]
-}
-Reglas:
-- Genera entre 4 y 6 preguntas
-- "correct" es el índice (0-3) de la respuesta correcta
-- "answerType" puede ser "single" o "multiple"
-- Si es "multiple", "correct" es un array de índices: [0, 2]
-- Las respuestas deben ser cortas (máximo 6 palabras)
-- Varía los tiempos entre 15, 20 y 30 segundos
-- Responde siempre en el mismo idioma del tema
-- Verifica dos veces que cada "correct" apunta al índice correcto antes de responder
-- IMPORTANTE: asegúrate de que el JSON esté completo y cerrado correctamente
-`;
-
+    setError(null);
     try {
       const res = await fetch(GROQ_URL, {
         method: "POST",
@@ -195,40 +214,28 @@ Reglas:
         body: JSON.stringify({
           model: MODEL,
           messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: `Tema: ${prompt}` },
+            { role: "system", content: SYSTEM_PROMPT },
+            { role: "user", content: prompt },
           ],
-          temperature: 0.5,
-          max_tokens: 2048,
+          temperature: 0.7,
+          max_tokens: 1200,
         }),
       });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error?.message || "Error al llamar a Groq");
-      }
-
       const data = await res.json();
+      if (data.error) throw new Error(data.error.message);
       const raw = data.choices[0].message.content.trim();
       const parsed = extractJSON(raw);
-      const validQuestions = validateQuiz(parsed);
-
-      if (validQuestions.length === 0)
-        throw new Error("No se generaron preguntas válidas");
-
-      const mapped = await Promise.all(
-        validQuestions.map(async (q) => ({
+      const questionsWithImages = await Promise.all(
+        (parsed.questions ?? []).map(async (q) => ({
           ...q,
           image: await fetchImage(q.question),
-        })),
+        }))
       );
-
-      setTitle(parsed.title);
-      setQuestions(mapped);
+      setTitle(parsed.title ?? "Quiz IA");
+      setQuestions(questionsWithImages);
       setActiveIndex(0);
       return true;
-    } catch (e) {
-      console.error("Error generando quiz:", e);
+    } catch {
       setError("No se pudo generar el quiz. Intenta de nuevo.");
       return false;
     } finally {

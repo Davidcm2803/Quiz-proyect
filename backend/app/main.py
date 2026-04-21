@@ -21,6 +21,7 @@ app.add_middleware(
         "http://localhost:5175",
         "http://localhost:5176",
         "https://quiz-proyect.vercel.app",
+        "https://quiz-proyect-seven.vercel.app",
         "https://quiz-proyect-45jl33mwj-davidcm2803s-projects.vercel.app",
     ],
     allow_credentials=True,

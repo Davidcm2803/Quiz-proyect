@@ -11,11 +11,11 @@ const CATEGORIES = [
 
 export default function CarouselCategories() {
   return (
-    <section className="py-6 w-full">
-      <h2 className="text-2xl font-black text-gray-900 mb-4 text-left ml-14">
+    <section className="py-4 sm:py-6 w-full">
+      <h2 className="text-xl sm:text-2xl font-black text-gray-900 mb-4">
         Explore categories
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-20 mr-14 ml-14">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {CATEGORIES.map((cat) => (
           <CategoryCard key={cat.id} title={cat.title} />
         ))}

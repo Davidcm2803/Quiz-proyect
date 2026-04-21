@@ -17,7 +17,7 @@ import CarouselArrow from "../ui/CarouselArrow";
 const TOOLS = [
   {
     id: 1,
-    bgColor: "#ef4444",
+    bgColor: "#e8678f",
     icon: <Plus size={22} strokeWidth={2.5} color="white" />,
     title: "Create content from scratch",
     buttonLabel: "Create",
@@ -25,7 +25,7 @@ const TOOLS = [
   },
   {
     id: 2,
-    bgColor: "#16a34a",
+    bgColor: "#00b64f",
     icon: <Sparkles size={22} strokeWidth={2} color="white" />,
     title: "Save time! Create kahoots with AI",
     buttonLabel: "Start creating",
@@ -33,15 +33,15 @@ const TOOLS = [
   },
   {
     id: 3,
-    bgColor: "#db2777",
+    bgColor: "#f93d3a",
     icon: <FileText size={22} strokeWidth={2} color="white" />,
     title: "Generate a kahoot from your PDF file in one click",
     buttonLabel: "Create",
-    path: "/quiz/pdf", 
+    path: "/quiz/pdf",
   },
   {
     id: 4,
-    bgColor: "#7c3aed",
+    bgColor: "#f6d636",
     icon: <LayoutGrid size={22} strokeWidth={2} color="white" />,
     title: "Organize your content with smart layouts",
     buttonLabel: "Explore",
@@ -49,7 +49,7 @@ const TOOLS = [
   },
   {
     id: 5,
-    bgColor: "#0891b2",
+    bgColor: "#e8678f",
     icon: <Lightbulb size={22} strokeWidth={2} color="white" />,
     title: "Get inspired with ready-made templates",
     buttonLabel: "Browse",
@@ -57,7 +57,7 @@ const TOOLS = [
   },
   {
     id: 6,
-    bgColor: "#ea580c",
+    bgColor: "#3d98d6",
     icon: <BookOpen size={22} strokeWidth={2} color="white" />,
     title: "Learn best practices from our guide library",
     buttonLabel: "Read",
@@ -99,20 +99,14 @@ function ToolCard({ bgColor, icon, title, buttonLabel, path }) {
 
 const GAP = 20;
 
-function getVisible(width) {
-  if (width < 640) return 1;
-  if (width < 1024) return 2;
-  return 3;
-}
-
 export default function Carousel() {
   const [current, setCurrent] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
 
   const containerRef = useRef(null);
+  const visible = 3;
   const total = TOOLS.length;
-  const visible = getVisible(containerWidth);
   const maxIndex = Math.max(0, total - visible);
 
   useEffect(() => {
@@ -151,12 +145,13 @@ export default function Carousel() {
   const offset = current * (cardWidth + GAP);
 
   return (
-    <section className="py-6 w-full relative">
+    // "hidden" por defecto, "block" solo en lg+
+    <section className="hidden lg:block px-14 py-6 w-full relative">
       <h2 className="text-2xl font-black text-gray-900 mb-4 text-left ml-14">
         Quick tools to get started
       </h2>
 
-      <div className="flex items-center gap-4 mb-0">
+      <div className="flex items-center gap-4">
         <CarouselArrow onClick={prev}>
           <ChevronLeft size={18} strokeWidth={2.5} />
         </CarouselArrow>

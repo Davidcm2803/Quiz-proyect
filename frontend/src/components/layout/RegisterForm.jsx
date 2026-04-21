@@ -5,6 +5,7 @@ import { GoogleIcon, MicrosoftIcon } from "../ui/Icons";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { signInWithGoogle, signInWithMicrosoft } from "../../firebase/firebase";
+import config from "../../config";
 
 export default function RegisterForm() {
   const [username, setUsername] = useState("");
@@ -29,7 +30,7 @@ export default function RegisterForm() {
     }
 
     try {
-      const response = await fetch("http://localhost:8000/users/", {
+      const response = await fetch(`${config.API_URL}/users/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, password }),
@@ -62,7 +63,7 @@ export default function RegisterForm() {
 
       setTimeout(async () => {
         try {
-          const response = await fetch("http://localhost:8000/users/google-login", {
+          const response = await fetch(`${config.API_URL}/users/google-login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id_token: result.idToken }),
@@ -101,7 +102,7 @@ export default function RegisterForm() {
       const result = await signInWithMicrosoft();
       if (!result) return;
 
-      const response = await fetch("http://localhost:8000/users/microsoft-login", {
+      const response = await fetch(`${config.API_URL}/users/microsoft-login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id_token: result.idToken }),

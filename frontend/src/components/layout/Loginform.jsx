@@ -5,6 +5,7 @@ import { GoogleIcon, MicrosoftIcon } from "../ui/Icons";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { signInWithGoogle, signInWithMicrosoft, resetPassword } from "../../firebase/firebase";
+import config from "../../config";
 
 export default function LoginForm() {
   const [username, setUsername] = useState("");
@@ -17,39 +18,29 @@ export default function LoginForm() {
   const { login } = useAuth();
 
   const handleLogin = async () => {
-    console.log("1. handleLogin called");
-    console.log("username:", username, "password:", password);
-
     try {
       if (!username || !password) {
         setError("Please fill all fields");
-        console.log("2. empty fields");
         return;
       }
 
-      console.log("3. sending fetch...");
-      const response = await fetch("http://localhost:8000/users/login", {
+      const response = await fetch(`${config.API_URL}/users/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: username, password: password }),
       });
 
-      console.log("4. response status:", response.status);
       const data = await response.json();
-      console.log("5. data:", data);
 
       if (!response.ok) {
         const msg = Array.isArray(data.detail)
           ? data.detail[0]?.msg || "Error de validación"
           : data.detail || "Login failed";
         setError(msg);
-        console.log("6. not ok:", msg);
         return;
       }
 
-      console.log("7. calling login()");
       login(data.access_token, data.user);
-      console.log("8. calling window.location.href");
       window.location.href = "/";
     } catch (err) {
       console.error("CATCH ERROR:", err);
@@ -62,7 +53,7 @@ export default function LoginForm() {
       const result = await signInWithGoogle();
       if (!result) return;
 
-      const response = await fetch("http://localhost:8000/users/google-login", {
+      const response = await fetch(`${config.API_URL}/users/google-login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id_token: result.idToken }),
@@ -92,7 +83,7 @@ export default function LoginForm() {
       const result = await signInWithMicrosoft();
       if (!result) return;
 
-      const response = await fetch("http://localhost:8000/users/microsoft-login", {
+      const response = await fetch(`${config.API_URL}/users/microsoft-login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id_token: result.idToken }),
