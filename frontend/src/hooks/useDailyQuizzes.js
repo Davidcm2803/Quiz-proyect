@@ -1,12 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import config from "../config";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_API_KEY = config.GROQ_KEY;
-const UNSPLASH_KEY = config.UNSPLASH_KEY;
 const MODEL = "llama-3.1-8b-instant";
 
-const CATEGORIES = ["science", "mathematics", "history", "languages", "technology", "art-and-design"];
+export const CATEGORIES = [
+  "science",
+  "mathematics",
+  "history",
+  "languages",
+  "technology",
+  "art-and-design",
+];
 
 const simplifyImageQuery = async (question) => {
   try {
@@ -37,14 +43,13 @@ const simplifyImageQuery = async (question) => {
   }
 };
 
-const searchUnsplash = async (query) => {
+const searchPixabay = async (query) => {
   try {
     const res = await fetch(
-      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape`,
-      { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` } },
+      `https://pixabay.com/api/?key=55524294-5b653e1325aef52868b460bcc&q=${encodeURIComponent(query)}&image_type=photo&orientation=horizontal&per_page=3&safesearch=true`
     );
     const data = await res.json();
-    return data.results?.[0]?.urls?.regular ?? null;
+    return data.hits?.[0]?.previewURL ?? null;
   } catch {
     return null;
   }
@@ -75,10 +80,10 @@ export const fetchImage = async (question) => {
   try {
     const query = await simplifyImageQuery(question);
 
-    const byKeywords = await searchUnsplash(query);
+    const byKeywords = await searchPixabay(query);
     if (byKeywords) return byKeywords;
 
-    const byQuestion = await searchUnsplash(question);
+    const byQuestion = await searchPixabay(question);
     if (byQuestion) return byQuestion;
 
     const wikiByKeywords = await fetchWikipediaImage(query);
@@ -87,12 +92,7 @@ export const fetchImage = async (question) => {
     const wikiByQuestion = await fetchWikipediaImage(question);
     if (wikiByQuestion) return wikiByQuestion;
 
-    const genericRes = await fetch(
-      `https://api.unsplash.com/photos/random?query=education&orientation=landscape`,
-      { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` } },
-    );
-    const genericData = await genericRes.json();
-    return genericData?.urls?.regular ?? null;
+    return null;
   } catch {
     return null;
   }
@@ -118,8 +118,9 @@ const extractJSON = (raw) => {
   return JSON.parse(clean.slice(start, end + 1));
 };
 
-const generateQuizForCategory = async (slug) => {
+export const generateQuizForCategory = async (slug) => {
   const label = slug.replace(/-/g, " ").replace(/\band\b/g, "&");
+
   const res = await fetch(GROQ_URL, {
     method: "POST",
     headers: {
@@ -144,6 +145,7 @@ const generateQuizForCategory = async (slug) => {
   if (data.error) throw new Error(data.error.message);
   const raw = data.choices[0].message.content.trim();
   const parsed = extractJSON(raw);
+
   const questionsWithImages = await Promise.all(
     (parsed.questions ?? []).map(async (q) => ({
       ...q,
@@ -156,7 +158,6 @@ const generateQuizForCategory = async (slug) => {
 
 const getTodayKey = () => new Date().toISOString().slice(0, 10);
 const getCacheKey = (slug) => `quiz_${slug}_${getTodayKey()}`;
-const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
 export const getCachedQuiz = (slug) => {
   try {
@@ -177,71 +178,56 @@ export const clearCachedQuiz = (slug) => {
   localStorage.removeItem(getCacheKey(slug));
 };
 
-export const loadOrGenerateDailyQuizzes = async () => {
-  const quizzes = {};
-  for (const slug of CATEGORIES) {
+export function useDailyQuiz(slug) {
+  const [quiz, setQuiz] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const load = async (force = false) => {
+    setLoading(true);
+    setError(false);
+
+    if (force) clearCachedQuiz(slug);
+
     const cached = getCachedQuiz(slug);
     if (cached) {
-      quizzes[slug] = cached;
-      continue;
+      setQuiz(cached);
+      setLoading(false);
+      return;
     }
-    try {
-      const quiz = await generateQuizForCategory(slug);
-      setCachedQuiz(slug, quiz);
-      quizzes[slug] = quiz;
-      await delay(1200);
-    } catch {
-      quizzes[slug] = null;
-    }
-  }
-  return quizzes;
-};
 
-export function useQuizAI({ setTitle, setQuestions, setActiveIndex }) {
-  const [generating, setGenerating] = useState(false);
-  const [error, setError] = useState(null);
-
-  const generateQuiz = async (prompt) => {
-    setGenerating(true);
-    setError(null);
     try {
-      const res = await fetch(GROQ_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${GROQ_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            { role: "user", content: prompt },
-          ],
-          temperature: 0.7,
-          max_tokens: 1200,
-        }),
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error.message);
-      const raw = data.choices[0].message.content.trim();
-      const parsed = extractJSON(raw);
-      const questionsWithImages = await Promise.all(
-        (parsed.questions ?? []).map(async (q) => ({
-          ...q,
-          image: await fetchImage(q.question),
-        }))
-      );
-      setTitle(parsed.title ?? "Quiz IA");
-      setQuestions(questionsWithImages);
-      setActiveIndex(0);
-      return true;
+      const fresh = await generateQuizForCategory(slug);
+      setCachedQuiz(slug, fresh);
+      setQuiz(fresh);
     } catch {
-      setError("No se pudo generar el quiz. Intenta de nuevo.");
-      return false;
+      setError(true);
+      setQuiz(null);
     } finally {
-      setGenerating(false);
+      setLoading(false);
     }
   };
 
-  return { generateQuiz, generating, error };
+  useEffect(() => {
+    if (!slug) return;
+    load();
+  }, [slug]);
+
+  const regenerate = () => load(true);
+
+  return { quiz, loading, error, regenerate };
+}
+
+export function useCarouselQuizzes() {
+  const [quizzes, setQuizzes] = useState({});
+
+  useEffect(() => {
+    const result = {};
+    for (const slug of CATEGORIES) {
+      result[slug] = getCachedQuiz(slug);
+    }
+    setQuizzes(result);
+  }, []);
+
+  return { quizzes };
 }

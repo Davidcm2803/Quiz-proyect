@@ -9,6 +9,9 @@ import {
   getQuizFull,
   updateQuizInfo,
 } from "../database/database.js";
+import config from "../config";
+
+const API_URL = config.API_URL;
 
 const emptyQuestion = () => ({
   question: "",
@@ -119,7 +122,7 @@ export function useQuizCreate(quizId = null) {
           scheduled_at: scheduledAt ?? null,
         });
 
-        const res = await fetch(`http://localhost:8000/questions/by-quiz/${quizId}`, {
+        const res = await fetch(`${API_URL}/questions/by-quiz/${quizId}`, {
           method: "DELETE",
         });
         if (!res.ok) throw new Error("Failed to delete questions");

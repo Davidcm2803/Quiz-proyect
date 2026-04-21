@@ -1,8 +1,12 @@
-import { useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useNormalQuiz } from "../../hooks/useNormalQuiz";
 import FloatingDecorations from "../ui/FloatingDecorations";
 import quizsong from "../../assets/quizsong.mp3";
+import config from "../../config";
+
+// config disponible para hooks o extensiones futuras
+const { API_URL, WS_URL } = config;
 
 const COLORS = ["bg-[#e21b3c]", "bg-[#1368ce]", "bg-[#d89e00]", "bg-[#26890c]"];
 const ICONS = ["▲", "◆", "●", "■"];
@@ -22,6 +26,7 @@ export default function StudentGameMenu() {
   const { roomId, playerId } = useParams();
   const navigate = useNavigate();
   const audioRef = useRef(null);
+  const [ready, setReady] = useState(false);
 
   const {
     phase,
@@ -35,7 +40,7 @@ export default function StudentGameMenu() {
     timeLeft,
     finalPosition,
     submitAnswer,
-  } = useNormalQuiz(roomId, playerId);
+  } = useNormalQuiz(roomId, playerId, ready);
 
   useEffect(() => {
     const audio = new Audio(quizsong);
@@ -54,6 +59,26 @@ export default function StudentGameMenu() {
       audio.pause();
     }
   }, [phase]);
+
+  if (!ready) return (
+    <div className="min-h-screen bg-[#F8FBF3] flex flex-col items-center justify-center gap-6 px-4">
+      <div className="w-20 h-20 bg-[#16a34a] rounded-3xl flex items-center justify-center shadow-lg">
+        <span className="text-4xl">🎯</span>
+      </div>
+      <div className="text-center">
+        <h2 className="text-[#292726] text-3xl font-black mb-1">¡Listo para jugar?</h2>
+        <p className="text-[#292726]/50 text-sm">
+          Únete como <span className="font-bold text-[#292726]">{playerId}</span>
+        </p>
+      </div>
+      <button
+        onClick={() => setReady(true)}
+        className="bg-[#16a34a] text-white font-black text-xl px-12 py-4 rounded-2xl shadow-lg active:scale-95 transition-all hover:bg-[#15803d]"
+      >
+        ¡Estoy listo! 🚀
+      </button>
+    </div>
+  );
 
   if (phase === "loading") return (
     <div className="min-h-screen bg-[#F8FBF3] flex items-center justify-center">
@@ -110,7 +135,6 @@ export default function StudentGameMenu() {
           <div className="h-full bg-[#e21b3c] transition-all duration-1000"
             style={{ width: `${(countdown / (question.time || 20)) * 100}%` }} />
         </div>
-
         <div className="flex-1 flex flex-col items-center justify-between px-4 py-5 gap-4 relative z-10">
           <div className="w-full flex justify-between items-center max-w-5xl">
             <span className="text-[#a0a0b0] text-sm font-semibold">
@@ -123,25 +147,21 @@ export default function StudentGameMenu() {
               {totalScore} pts
             </span>
           </div>
-
           {isMultiple && (
             <span className="bg-white/10 text-white/50 text-xs font-semibold px-3 py-1 rounded-full">
               Selección múltiple
             </span>
           )}
-
           <h2 className="text-white font-bold text-center text-2xl sm:text-4xl w-full max-w-5xl">
             {question.text}
           </h2>
-
           {hasImage && (
             <img
               src={question.image}
               alt=""
-              className="w-full max-w-5xl max-h-[260px] sm:max-h-[320px] object-contain rounded-2xl"
+              className="w-full max-w-5xl h-80 sm:h-100 object-cover rounded-2xl"
             />
           )}
-
           <div className="w-full max-w-5xl grid grid-cols-2 gap-4 sm:gap-5">
             {question.answers.map((ans, i) => {
               const isSelected = isMultiple ? selectedArr.includes(i) : selected === i;
@@ -168,7 +188,6 @@ export default function StudentGameMenu() {
               );
             })}
           </div>
-
           {isMultiple && selectedArr.length > 0 && (
             <button
               onClick={() => submitAnswer("confirm")}

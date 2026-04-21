@@ -1,47 +1,45 @@
 import { useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker?url";
+import { fetchImage } from "./useQuizAI";
+import config from "../config";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_API_KEY = config.GROQ_KEY;
 const MODEL = "llama-3.1-8b-instant";
 
-export default function usePDFQuiz({
-  setTitle,
-  setQuestions,
-  setActiveIndex,
-}) {
+export default function usePDFQuiz({ setTitle, setQuestions, setActiveIndex }) {
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState("");
 
   async function extractTextFromPDF(file) {
     const buffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
-
     let text = "";
-
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
       const content = await page.getTextContent();
       text += content.items.map((i) => i.str).join(" ") + "\n";
     }
-
     return text;
   }
 
   function cleanJSON(text) {
-    return text.replace(/```json|```/g, "").trim();
+    let clean = text.replace(/```json|```/g, "").trim();
+    const start = clean.indexOf("{");
+    const end = clean.lastIndexOf("}");
+    if (start === -1 || end === -1 || end <= start) throw new Error("No JSON found");
+    return clean.slice(start, end + 1);
   }
 
   async function importFromPDF(file) {
-  try {
-    console.log("KEY:", import.meta.env.VITE_QHIT_KEY);
-
-    if (!file || file.type !== "application/pdf") {
-      setError("Archivo inválido. Debe ser un PDF.");
-      return null;
-    }
+    try {
+      if (!file || file.type !== "application/pdf") {
+        setError("Archivo inválido. Debe ser un PDF.");
+        return null;
+      }
 
       setImporting(true);
       setError("");
@@ -57,7 +55,7 @@ export default function usePDFQuiz({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_QHIT_KEY}`,
+          Authorization: `Bearer ${GROQ_API_KEY}`,
         },
         body: JSON.stringify({
           model: MODEL,
@@ -74,6 +72,7 @@ Reglas:
 - Mantener idioma original
 - timeLimit: 15, 20 o 30
 - answerType: "single" o "multiple"
+- IMPORTANTE: devuelve el JSON completo y cerrado correctamente
 
 Devuelve SOLO JSON válido sin texto extra:
 
@@ -88,13 +87,9 @@ Devuelve SOLO JSON válido sin texto extra:
       "correct": 0
     }
   ]
-}
-              `,
+}`,
             },
-            {
-              role: "user",
-              content: text,
-            },
+            { role: "user", content: text },
           ],
         }),
       });
@@ -106,7 +101,7 @@ Devuelve SOLO JSON válido sin texto extra:
 
       const data = await res.json();
 
-      if (!data.choices || !data.choices[0]) {
+      if (!data.choices?.[0]) {
         setError("Respuesta inválida de la IA");
         return null;
       }
@@ -120,16 +115,21 @@ Devuelve SOLO JSON válido sin texto extra:
       }
 
       const formatted = await Promise.all(
-        parsed.questions.map(async (q) => ({
-          question: q.question || "",
-          image: null,
-          answers: q.answers || ["", "", "", ""],
-          correct: Array.isArray(q.correct)
-            ? q.correct
-            : q.correct ?? 0,
-          timeLimit: q.timeLimit || 20,
-          answerType: q.answerType || "single",
-        }))
+        parsed.questions
+          .filter((q) =>
+            typeof q.question === "string" &&
+            Array.isArray(q.answers) &&
+            q.answers.length >= 2 &&
+            (typeof q.correct === "number" || Array.isArray(q.correct))
+          )
+          .map(async (q) => ({
+            question: q.question || "",
+            image: await fetchImage(q.question || ""),
+            answers: q.answers || ["", "", "", ""],
+            correct: Array.isArray(q.correct) ? q.correct : q.correct ?? 0,
+            timeLimit: [15, 20, 30].includes(q.timeLimit) ? q.timeLimit : 20,
+            answerType: q.answerType === "multiple" ? "multiple" : "single",
+          }))
       );
 
       if (formatted.length === 0) {
@@ -145,7 +145,6 @@ Devuelve SOLO JSON válido sin texto extra:
       setTitle(result.title);
       setQuestions(result.questions);
       setActiveIndex(0);
-
       return result;
     } catch (e) {
       console.error(e);

@@ -10,7 +10,8 @@ export default function QuizCard({ quiz, onDelete }) {
 
   useEffect(() => {
     const handler = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+      if (menuRef.current && !menuRef.current.contains(e.target))
+        setMenuOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -67,23 +68,40 @@ export default function QuizCard({ quiz, onDelete }) {
               : "bg-[#16a34a]/90 text-white"
           }`}
         >
-          {isPresentation ? <Monitor size={9} /> : <Play size={9} fill="white" strokeWidth={0} />}
+          {isPresentation ? (
+            <Monitor size={9} />
+          ) : (
+            <Play size={9} fill="white" strokeWidth={0} />
+          )}
           {isPresentation ? "Presentación" : "Normal"}
         </div>
       </div>
       <div className="px-3 py-2.5 flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-gray-800 truncate">{quiz.title}</p>
-          <p className="text-left text-xs text-gray-400 truncate">{quiz.creator_username ?? "Tú"}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-semibold text-gray-800 truncate">
+              {quiz.title}
+            </p>
+            {quiz.pin && (
+              <p className="text-xs font-bold text-gray-600 flex-shrink-0">
+                PIN: {quiz.pin}
+              </p>
+            )}
+          </div>
+          <p className="text-left text-xs text-gray-400 truncate">
+            {quiz.creator_username ?? "Tú"}
+          </p>
         </div>
         <div className="relative flex-shrink-0" ref={menuRef}>
           <button
-            onClick={(e) => { e.stopPropagation(); setMenuOpen((o) => !o); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setMenuOpen((o) => !o);
+            }}
             className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 transition-all"
           >
             <MoreVertical size={15} className="text-gray-400" />
           </button>
-
           {menuOpen && (
             <div className="absolute right-0 bottom-8 w-36 bg-white rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden z-50">
               <button

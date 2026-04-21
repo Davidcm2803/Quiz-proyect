@@ -14,6 +14,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import QuizPDF from "./pages/QuizPDF";
 import Learn from "./pages/Learn";
 import Discover from "./pages/Discover";
+import CategoryPage from "./pages/CategoryPage";
 
 export default function App() {
   return (
@@ -27,8 +28,10 @@ export default function App() {
         <Route path="/present/:roomId/:playerId" element={<Present />} />
         <Route path="/host/:roomId" element={<HostGame />} />
         <Route path="/present" element={<Presentgame />} />
+        <Route path="/present/:roomId" element={<Presentgame />} /> 
         <Route path="/learn" element={<Learn />} />
         <Route path="/discover" element={<Discover />} />
+        <Route path="/category/:slug" element={<CategoryPage />} />
         <Route
           path="/quiz/create"
           element={

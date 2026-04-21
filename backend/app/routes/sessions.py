@@ -42,14 +42,17 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, player_id: str)
                 answer = data.get("answer")
                 points = data.get("points", 0)
 
-                if manager.has_answered(room_id, question_id, player_id):
+                print(f"[ANSWER] player={player_id} question_id={question_id} points={points}")
+                already = manager.has_answered(room_id, question_id, player_id)
+                print(f"[ANSWER] has_answered={already}")
+
+                if already:
                     await websocket.send_json({
                         "event": "error",
                         "message": "Duplicate answer not allowed"
                     })
                     continue
 
-                # suma los puntos que calculó el frontend
                 if points > 0:
                     manager.update_score(room_id, player_id, points)
 
@@ -57,6 +60,13 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str, player_id: str)
                     "event": "answerSubmitted",
                     "playerId": player_id
                 })
+
+                room = manager.rooms.get(room_id)
+                if room:
+                    await manager.broadcast(room_id, {
+                        "event": "scoreUpdate",
+                        "scores": room.scores
+                    })
 
             elif event == "updateScore":
                 room = manager.rooms.get(room_id)

@@ -4,35 +4,32 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   OAuthProvider,
-  fetchSignInMethodsForEmail,
-  linkWithPopup,
   sendPasswordResetEmail,
 } from "firebase/auth";
+import config from "../config";
 
-export const resetPassword = async (email) => {
-  await sendPasswordResetEmail(auth, email);
-};
-
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-};
-
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(config.firebase);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
 let popupOpen = false;
+
+export const resetPassword = async (email) => {
+  await sendPasswordResetEmail(auth, email);
+};
 
 export const signInWithGoogle = async () => {
   if (popupOpen) return null;
   popupOpen = true;
   try {
     const result = await signInWithPopup(auth, googleProvider);
+    console.log("1. popup ok", result.user.email);
     const idToken = await result.user.getIdToken();
+    console.log("2. token ok", idToken.slice(0, 20));
     return { user: result.user, idToken };
   } catch (error) {
+    console.error("ERROR CODE:", error.code);
+    console.error("ERROR MSG:", error.message);
     if (error.code === "auth/popup-blocked") throw new Error("POPUP_BLOCKED");
     if (error.code === "auth/cancelled-popup-request") return null;
     if (error.code === "auth/popup-closed-by-user") return null;

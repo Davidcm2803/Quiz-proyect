@@ -19,17 +19,14 @@ export default function PresentGame() {
             <LogIn size={28} className="text-gray-400" />
           </div>
           <div className="text-center">
-            <p className="text-gray-800 font-black text-xl mb-2">¡Ups!</p>
-            <p className="text-gray-500 font-semibold text-sm mb-1">
-              Para presentar necesitas iniciar sesión
-            </p>
+            <p className="text-gray-800 font-black text-xl mb-2">Inicia sesión para presentar</p>
             <p className="text-gray-400 text-xs max-w-xs">
               Accede a tu cuenta para ver tus quizzes disponibles.
             </p>
           </div>
           <button
             onClick={() => navigate("/signup")}
-            className="bg-[#16a34a] hover:bg-[#15803d] text-white text-sm font-bold px-8 py-3 rounded-2xl transition-all active:scale-95"
+            className="bg-[#e8678f] hover:bg-[#df4071] text-white text-sm font-bold px-8 py-3 rounded-2xl transition-all active:scale-95"
           >
             Iniciar sesión
           </button>

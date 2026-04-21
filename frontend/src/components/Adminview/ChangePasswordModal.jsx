@@ -3,7 +3,7 @@ import { Eye, EyeOff, Lock, CheckCircle2, Loader2, ShieldCheck } from "lucide-re
 import { useAuth } from "../../context/AuthContext";
 import Button from "../ui/Button";
 import { Overlay, ModalHeader, ModalFooter } from "./ChangeUsernameModal";
-import api from "../../api/axios";
+import config from "../../config";
 
 const RULES = [
   { id: "length",  label: "Al menos 8 caracteres",         test: (p) => p.length >= 8 },
@@ -97,14 +97,23 @@ export default function ChangePasswordModal({ onClose }) {
     setLoading(true);
     setError("");
     try {
-      await api.put(`/users/${user.id}/password`, {
-        current_password: current,
-        new_password: next,
+      const res = await fetch(`${config.API_URL}/users/${user.id}/password`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ current_password: current, new_password: next }),
       });
+      const data = await res.json();
+      if (!res.ok) {
+        const msg = Array.isArray(data.detail)
+          ? data.detail[0]?.msg || "Error de validación"
+          : data.detail || "No se pudo actualizar la contraseña.";
+        setError(msg);
+        return;
+      }
       setSuccess(true);
       setTimeout(() => { setSuccess(false); onClose(); }, 1600);
     } catch (e) {
-      setError(e?.response?.data?.detail ?? "No se pudo actualizar la contraseña.");
+      setError("No se pudo actualizar la contraseña.");
     } finally {
       setLoading(false);
     }
@@ -125,6 +134,7 @@ export default function ChangePasswordModal({ onClose }) {
             autoComplete="current-password"
           />
         </div>
+
         <div>
           <label className="block text-xs font-semibold text-gray-600 mb-1.5">Nueva contraseña</label>
           <PwInput
@@ -136,6 +146,7 @@ export default function ChangePasswordModal({ onClose }) {
           />
           <StrengthBar password={next} />
         </div>
+
         <div>
           <label className="block text-xs font-semibold text-gray-600 mb-1.5">Confirmar contraseña</label>
           <PwInput
@@ -153,6 +164,7 @@ export default function ChangePasswordModal({ onClose }) {
             {error}
           </div>
         )}
+
         <div className="flex items-start gap-2 bg-[#fde8e0] rounded-xl px-4 py-2.5">
           <ShieldCheck size={13} className="text-[#e21b3c] flex-shrink-0 mt-0.5" />
           <p className="text-xs text-[#e21b3c]">
@@ -168,7 +180,7 @@ export default function ChangePasswordModal({ onClose }) {
           disabled={loading || success || !canSubmit}
           className={`w-full justify-center ${success ? "!bg-green-500 hover:!bg-green-500" : ""}`}
         >
-          {loading && <Loader2     size={14} className="animate-spin" />}
+          {loading && <Loader2      size={14} className="animate-spin" />}
           {success && <CheckCircle2 size={14} />}
           {success ? "¡Lista!" : loading ? "Guardando..." : "Cambiar"}
         </Button>

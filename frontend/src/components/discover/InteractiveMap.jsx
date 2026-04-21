@@ -120,8 +120,8 @@ export default function InteractiveMap() {
         </a>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-5">
-        <div className="relative flex-1 h-[360px] rounded-2xl overflow-hidden bg-[#cce5f0] shadow-inner border border-gray-200">
+      <div className="flex flex-col lg:flex-row gap-5 lg:items-stretch">
+        <div className="relative flex-1 min-h-[360px] rounded-2xl overflow-hidden bg-[#cce5f0] shadow-inner border border-gray-200">
           <iframe
             title="World Map"
             src="https://www.openstreetmap.org/export/embed.html?bbox=-170%2C-60%2C190%2C75&layer=mapnik"
@@ -174,6 +174,44 @@ export default function InteractiveMap() {
             ))}
           </div>
         </div>
+
+        {active && (
+          <div className="lg:w-80 bg-white rounded-2xl shadow border border-gray-100 p-5 flex flex-col gap-3">
+            {isLoading ? (
+              <div className="flex items-center justify-center h-40">
+                <div className="flex gap-1.5">
+                  {[0,1,2].map(i => (
+                    <div key={i} className="w-2 h-2 bg-gray-300 rounded-full animate-bounce"
+                      style={{ animationDelay: `${i * 0.2}s` }} />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <>
+                {info?.image && (
+                  <img src={info.image} alt={active.name}
+                    className="w-full h-40 object-cover rounded-xl" />
+                )}
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">{active.emoji}</span>
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{active.region}</p>
+                    <h3 className="font-black text-gray-900 text-lg leading-tight">{active.name}</h3>
+                  </div>
+                </div>
+                <p className="text-gray-500 text-sm leading-relaxed">{info?.desc ?? active.fallbackDesc}</p>
+                <a
+                  href={info?.url ?? `https://en.wikipedia.org/wiki/${active.wikiTitle}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-sm font-bold text-[#e85d2e] hover:underline mt-auto"
+                >
+                  Read more <ArrowRight size={14} />
+                </a>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );

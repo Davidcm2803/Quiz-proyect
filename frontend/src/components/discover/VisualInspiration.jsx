@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { ZoomIn, Heart, ExternalLink, X } from "lucide-react";
-
-const UNSPLASH_KEY = import.meta.env.VITE_UNSPLASH_KEY;
+import config from "../../config";
 
 const TOPICS = [
   { query: "ancient architecture",  label: "Ancient Architecture", category: "Architecture" },
@@ -22,20 +21,16 @@ const CATEGORY_BADGE = {
   Art:          "bg-pink-100 text-pink-700",
 };
 
-
 function buildUrl(query, w = 600) {
-  if (UNSPLASH_KEY) {
-    return `https://source.unsplash.com/${w}x${Math.round(w * 1.2)}?${encodeURIComponent(query)}`;
-  }
   return `https://source.unsplash.com/${w}x${Math.round(w * 1.2)}?${encodeURIComponent(query)}`;
 }
 
 async function fetchUnsplashMeta(query) {
-  if (!UNSPLASH_KEY) return null;
+  if (!config.UNSPLASH_KEY) return null;
   try {
     const res = await fetch(
       `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1&orientation=portrait`,
-      { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` } }
+      { headers: { Authorization: `Client-ID ${config.UNSPLASH_KEY}` } }
     );
     const d = await res.json();
     const photo = d.results?.[0];
@@ -171,7 +166,7 @@ export default function VisualInspiration() {
               Unsplash
             </a>
             . Click any photo to expand.
-            {!UNSPLASH_KEY && (
+            {!config.UNSPLASH_KEY && (
               <span className="text-amber-600 ml-2 text-[11px]">
                 (Add <code className="bg-gray-100 px-1 rounded">VITE_UNSPLASH_KEY</code> for photographer credits)
               </span>
